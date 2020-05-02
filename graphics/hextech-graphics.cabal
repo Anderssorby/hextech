@@ -1,0 +1,68 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: fd87211eba2c0e119f5404ea40923de92711f09082c7014c7d4fcb5aa6d951e2
+
+name:           hextech-graphics
+version:        0.1.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      Common
+      Main
+  other-modules:
+      Paths_hextech_graphics
+  hs-source-dirs:
+      src
+  build-depends:
+      base >=4.9.1.0 && <5
+    , flow
+    , monad-logger >=0.3 && <0.4
+    , sdl2
+    , sdl2-image
+    , template-haskell
+    , text
+  default-language: Haskell2010
+
+executable hextech-graphics
+  main-is: Main.hs
+  other-modules:
+      Common
+      Paths_hextech_graphics
+  hs-source-dirs:
+      src
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.9.1.0 && <5
+    , flow
+    , hextech-graphics
+    , monad-logger >=0.3 && <0.4
+    , sdl2
+    , sdl2-image
+    , template-haskell
+    , text
+  default-language: Haskell2010
+
+test-suite hextech-graphics-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_hextech_graphics
+  hs-source-dirs:
+      test
+  ghc-options: -Wall
+  build-depends:
+      base >=4.9.1.0 && <5
+    , flow
+    , hextech-graphics
+    , hspec >=2.0.0
+    , monad-logger >=0.3 && <0.4
+    , sdl2
+    , sdl2-image
+    , template-haskell
+    , text
+  default-language: Haskell2010
