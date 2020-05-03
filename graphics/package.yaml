@@ -4,12 +4,16 @@ version: "0.1.0"
 dependencies:
 
 - base >=4.9.1.0 && <5
+- extra
 - template-haskell
 - monad-logger >=0.3 && <0.4
 - sdl2
 - sdl2-image
 - text
 - flow
+# Dev
+- hlint
+- brittany
 
 # The library contains all of our application code. The executable
 # defined below is just a thin wrapper.
