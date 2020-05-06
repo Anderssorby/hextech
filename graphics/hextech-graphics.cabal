@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 05834e34cb2c2876b8da6a63b4fd763ce69119493948ca2bd8404e4d499b0901
+-- hash: a8545abbae05abbc7fbe6f5f867fd9c881a4025edd82e885072db24135918e92
 
 name:           hextech-graphics
 version:        0.1.0
@@ -29,6 +29,7 @@ library
     , sdl2-image
     , template-haskell
     , text
+    , vector
   default-language: Haskell2010
 
 executable hextech-graphics
@@ -51,6 +52,7 @@ executable hextech-graphics
     , sdl2-image
     , template-haskell
     , text
+    , vector
   default-language: Haskell2010
 
 test-suite hextech-graphics-test
@@ -74,4 +76,5 @@ test-suite hextech-graphics-test
     , sdl2-image
     , template-haskell
     , text
+    , vector
   default-language: Haskell2010

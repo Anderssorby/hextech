@@ -7,6 +7,7 @@ dependencies:
 - extra
 - template-haskell
 - monad-logger >=0.3 && <0.4
+- vector
 - sdl2
 - sdl2-image
 - text

@@ -9,7 +9,8 @@ import Data.Text              (Text)
 
 import SDL (($=))
 
-
+{-| Initialize SDL
+-}
 withSDL :: (MonadIO m) => m a -> m ()
 withSDL op = do
   SDL.initialize []
