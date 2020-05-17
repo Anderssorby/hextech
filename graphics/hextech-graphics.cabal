@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c218ae4ca670c612216f2cd1fb94cee6e7b1668ba1ea5231bb03b81edc289839
+-- hash: 37fec79df9e039a4e47b0d5b6c5d015f4e64bd3924e834b6a013b7d2d6655fcb
 
 name:           hextech-graphics
 version:        0.1.0
@@ -15,6 +15,7 @@ library
       Common
       Game
       Graphics
+      Grid
       Main
   other-modules:
       Paths_hextech_graphics
@@ -40,6 +41,7 @@ executable hextech-graphics
       Common
       Game
       Graphics
+      Grid
       Paths_hextech_graphics
   hs-source-dirs:
       src

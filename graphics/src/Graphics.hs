@@ -9,8 +9,8 @@ module Graphics
 where
 
 import qualified SDL
+import qualified SDL.Image
 import           SDL                            ( ($=) )
-import qualified Common                        as C
 
 import           Control.Monad                  ( foldM
                                                 , void
@@ -24,10 +24,13 @@ import           Prelude                 hiding ( Left
                                                 )
 
 import           Foreign.C.Types                ( CInt(..) )
+import           Data.Text                      ( Text )
+import           Grid                           ( Grid )
 
 data Intent
   = SelectSurface Direction
   | Idle
+  | StartGame
   | Quit
 
 
@@ -37,9 +40,12 @@ data Direction
   | Down
   | Left
   | Right
+
+
 data Color = White | Red | Blue | Green | Yellow
 
 type Point t = (t, t)
+
 data Camera = Camera
 
 class Monad m => CameraControl m where
@@ -103,6 +109,7 @@ runIntent :: (Monad m) => Intent -> m Bool
 runIntent Quit                = pure False
 
 runIntent Idle                = pure True
+runIntent StartGame           = pure True
 
 runIntent (SelectSurface key) = pure True
 
@@ -122,12 +129,40 @@ withRenderer w op = do
   void $ op r
   SDL.destroyRenderer r
 
+{-| Initialize SDL
+-}
+withSDL :: (MonadIO m) => m a -> m ()
+withSDL op = do
+  SDL.initialize []
+  void op
+  SDL.quit
+
+
+withSDLImage :: (MonadIO m) => m a -> m ()
+withSDLImage op = do
+  SDL.Image.initialize []
+  void op
+  SDL.Image.quit
+
+
+withWindow :: (MonadIO m) => Text -> (Int, Int) -> (SDL.Window -> m a) -> m ()
+withWindow title (x, y) op = do
+  w <- SDL.createWindow title p
+  SDL.showWindow w
+  void $ op w
+  SDL.destroyWindow w
+
+ where
+  p = SDL.defaultWindow { SDL.windowInitialSize = z }
+  z = SDL.V2 (fromIntegral x) (fromIntegral y)
+
+
 conditionallyRun :: (Monad m) => m a -> Bool -> m Bool
 conditionallyRun m True  = True <$ m
 conditionallyRun _ False = pure False
 
 makeWindow :: IO ()
-makeWindow = C.withSDL $ C.withWindow "HexTech" (1000, 1000) $ \w ->
+makeWindow = withSDL $ withWindow "HexTech" (1000, 1000) $ \w ->
   withRenderer w $ \r -> do
 
     screen <- SDL.getWindowSurface w
@@ -144,6 +179,9 @@ makeWindow = C.withSDL $ C.withWindow "HexTech" (1000, 1000) $ \w ->
     --mapM SDL.freeSurface images
     --mapM SDL.freeSurface surfaces
     SDL.freeSurface screen
+
+gridToPixels :: Grid -> [Vector (SDL.Point SDL.V2 CInt)]
+gridToPixels (Grid tiles) = 
 
 makeGrid :: [Vector (SDL.Point SDL.V2 CInt)]
 makeGrid = map tile coords
@@ -210,7 +248,7 @@ makeHexagon :: Point Int -> Int -> Vector (SDL.Point SDL.V2 CInt)
 makeHexagon center size = Vector.generate 7 $ pointyHexCorner center size
 
 pointyHexCorner :: Point Int -> Int -> Int -> SDL.Point SDL.V2 CInt
-pointyHexCorner (x, y) size i = C.mkPoint px py
+pointyHexCorner (x, y) size i = mkPoint px py
  where
   angleRad = pi / 3 * fromIntegral i + pi / 6
   px       = round (fromIntegral x + fromIntegral size * cos (angleRad)) :: CInt
@@ -232,8 +270,7 @@ drawRectangle r s = SDL.drawRect r (Just s)
 
 
 drawLine :: (MonadIO m) => SDL.Renderer -> (CInt, CInt) -> (CInt, CInt) -> m ()
-drawLine r (ox, oy) (tx, ty) =
-  SDL.drawLine r (C.mkPoint ox oy) (C.mkPoint tx ty)
+drawLine r (ox, oy) (tx, ty) = SDL.drawLine r (mkPoint ox oy) (mkPoint tx ty)
 
 drawLines
   :: (MonadIO m) => SDL.Renderer -> Vector (SDL.Point SDL.V2 CInt) -> m ()
@@ -250,3 +287,7 @@ setColor r Green = SDL.rendererDrawColor r $= SDL.V4 0 maxBound 0 maxBound
 setColor r Blue  = SDL.rendererDrawColor r $= SDL.V4 0 0 maxBound maxBound
 setColor r Yellow =
   SDL.rendererDrawColor r $= SDL.V4 maxBound maxBound 0 maxBound
+
+
+mkPoint :: a -> a -> SDL.Point SDL.V2 a
+mkPoint x y = SDL.P (SDL.V2 x y)
