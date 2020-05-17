@@ -2,8 +2,9 @@
 {-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DeriveTraversable #-}
 
-module Main
-  ( main
+module Graphics
+  ( CameraControl
+  , makeWindow
   )
 where
 
@@ -11,7 +12,9 @@ import qualified SDL
 import           SDL                            ( ($=) )
 import qualified Common                        as C
 
-import           Control.Monad                  ( foldM )
+import           Control.Monad                  ( foldM
+                                                , void
+                                                )
 import           Control.Monad.Extra            ( whileM )
 import           Control.Monad.IO.Class         ( MonadIO )
 import qualified Data.Vector.Storable          as Vector
@@ -21,10 +24,6 @@ import           Prelude                 hiding ( Left
                                                 )
 
 import           Foreign.C.Types                ( CInt(..) )
-
-import           Graphics
--- For debugging
---import qualified Debug.Trace                   as Debug
 
 data Intent
   = SelectSurface Direction
@@ -38,31 +37,15 @@ data Direction
   | Down
   | Left
   | Right
-
-
-data SurfaceMap a = SurfaceMap
-  { help  :: a
-  , up    :: a
-  , down  :: a
-  , left  :: a
-  , right :: a
-  } deriving (Foldable, Traversable, Functor)
-
 data Color = White | Red | Blue | Green | Yellow
 
 type Point t = (t, t)
+data Camera = Camera
 
-surfacePaths :: SurfaceMap FilePath
-surfacePaths = SurfaceMap { help  = "./assets/press.bmp"
-                          , up    = "./assets/up.bmp"
-                          , down  = "./assets/down.bmp"
-                          , left  = "./assets/left.bmp"
-                          , right = "./assets/right.bmp"
-                          }
-
-
-main :: IO ()
-main = makeWindow
+class Monad m => CameraControl m where
+  adjustCamera :: Camera -> m ()
+  disableZoom :: m ()
+  enableZoom :: m ()
 
 {-| Scale a surface to another surface
 -}
@@ -105,26 +88,62 @@ getKey (SDL.KeyboardEventData _ SDL.Pressed False keysym) =
     _                 -> SelectSurface Help
 
 
+
+data SurfaceMap a = SurfaceMap
+  { help  :: a
+  , up    :: a
+  , down  :: a
+  , left  :: a
+  , right :: a
+  } deriving (Foldable, Traversable, Functor)
+
 {-| Update the system from the intent
 -}
-runIntent :: (Monad m) => SurfaceMap a -> (a -> m ()) -> Intent -> m Bool
-runIntent _  _ Quit                = pure False
+runIntent :: (Monad m) => Intent -> m Bool
+runIntent Quit                = pure False
 
-runIntent _  _ Idle                = pure True
+runIntent Idle                = pure True
 
-runIntent cs f (SelectSurface key) = True <$ f (selectSurface key cs)
+runIntent (SelectSurface key) = pure True
 
 
-selectSurface :: Direction -> SurfaceMap a -> a
-selectSurface Help  = help
-selectSurface Up    = up
-selectSurface Down  = down
-selectSurface Left  = left
-selectSurface Right = right
+{-| Renderer
+-}
+rendererConfig :: SDL.RendererConfig
+rendererConfig = SDL.RendererConfig
+  { SDL.rendererType          = SDL.AcceleratedVSyncRenderer
+  , SDL.rendererTargetTexture = False
+  }
 
---instance (Vector.Storable a) => Foldable (Vector a) where
---    foldMap :: (a -> b) -> Vector a -> Vector b
---    foldMap f v = Vector.map f v
+
+withRenderer :: (MonadIO m) => SDL.Window -> (SDL.Renderer -> m a) -> m ()
+withRenderer w op = do
+  r <- SDL.createRenderer w (-1) rendererConfig
+  void $ op r
+  SDL.destroyRenderer r
+
+conditionallyRun :: (Monad m) => m a -> Bool -> m Bool
+conditionallyRun m True  = True <$ m
+conditionallyRun _ False = pure False
+
+makeWindow :: IO ()
+makeWindow = C.withSDL $ C.withWindow "HexTech" (1000, 1000) $ \w ->
+  withRenderer w $ \r -> do
+
+    screen <- SDL.getWindowSurface w
+    --pixelFormat <- SDL.surfaceFormat screen
+    --images <- mapM SDL.loadBMP surfacePaths
+    --surfaces <- mapM (\c -> SDL.convertSurface c pixelFormat) images
+
+    --let doRender = renderScaled r screen
+    --doRender $ help surfaces
+
+    whileM $ mkIntent <$> SDL.pollEvent >>= runIntent >>= conditionallyRun
+      (draw r)
+
+    --mapM SDL.freeSurface images
+    --mapM SDL.freeSurface surfaces
+    SDL.freeSurface screen
 
 makeGrid :: [Vector (SDL.Point SDL.V2 CInt)]
 makeGrid = map tile coords
@@ -149,6 +168,7 @@ makeGrid = map tile coords
       $ round size
   coords   = [ (i, j) | i <- [0 .. rows], j <- [0 .. cols] ]
   n_coords = length coords
+
 
 {-| Draw view
 -}
@@ -221,7 +241,6 @@ drawLines r points = SDL.drawLines r points
 
 drawDot :: (MonadIO m) => SDL.Renderer -> (CInt, CInt) -> m ()
 drawDot r (x, y) = SDL.drawPoint r (SDL.P (SDL.V2 x y))
-
 
 setColor :: (MonadIO m) => SDL.Renderer -> Color -> m ()
 setColor r White =
