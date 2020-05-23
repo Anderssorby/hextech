@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.33.1.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 37fec79df9e039a4e47b0d5b6c5d015f4e64bd3924e834b6a013b7d2d6655fcb
+-- hash: 2721c1877a5397f909133936fab87d30e63cbba6cf6f501789efd1f49bb2073b
 
 name:           hextech-graphics
 version:        0.1.0
@@ -27,6 +27,7 @@ library
     , extra
     , flow
     , hlint
+    , lens
     , monad-logger >=0.3 && <0.4
     , sdl2
     , sdl2-image
@@ -53,6 +54,7 @@ executable hextech-graphics
     , flow
     , hextech-graphics
     , hlint
+    , lens
     , monad-logger >=0.3 && <0.4
     , sdl2
     , sdl2-image
@@ -77,6 +79,7 @@ test-suite hextech-graphics-test
     , hextech-graphics
     , hlint
     , hspec >=2.0.0
+    , lens
     , monad-logger >=0.3 && <0.4
     , sdl2
     , sdl2-image

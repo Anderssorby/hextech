@@ -25,7 +25,10 @@ import           Prelude                 hiding ( Left
 
 import           Foreign.C.Types                ( CInt(..) )
 import           Data.Text                      ( Text )
-import           Grid                           ( Grid )
+import           Grid                           ( Grid
+                                                , gridTiles
+                                                , Tile
+                                                )
 
 data Intent
   = SelectSurface Direction
@@ -107,10 +110,8 @@ data SurfaceMap a = SurfaceMap
 -}
 runIntent :: (Monad m) => Intent -> m Bool
 runIntent Quit                = pure False
-
 runIntent Idle                = pure True
 runIntent StartGame           = pure True
-
 runIntent (SelectSurface key) = pure True
 
 
@@ -181,7 +182,7 @@ makeWindow = withSDL $ withWindow "HexTech" (1000, 1000) $ \w ->
     SDL.freeSurface screen
 
 gridToPixels :: Grid -> [Vector (SDL.Point SDL.V2 CInt)]
-gridToPixels (Grid tiles) = 
+gridToPixels grid = []
 
 makeGrid :: [Vector (SDL.Point SDL.V2 CInt)]
 makeGrid = map tile coords

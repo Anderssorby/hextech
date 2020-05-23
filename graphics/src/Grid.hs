@@ -1,5 +1,8 @@
 module Grid
   ( Grid
+  , Tile
+  , AxialCoord(..)
+  , gridTiles
   , hexagonGrid
   , toCubeCoord
   )
@@ -10,6 +13,8 @@ import           Data.List                      ( groupBy )
 
 data Grid = Grid [[Tile]] deriving (Show, Eq)
 
+gridTiles :: Grid -> [[Tile]]
+gridTiles (Grid tiles) = tiles
 
 data AxialCoord = AxialCoord (Int, Int) deriving (Show, Eq)
 
