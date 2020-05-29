@@ -1,6 +1,13 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Game
-  ()
+  ( twoPlayersGame
+  , Action(..)
+  , Player
+  , Game
+  , Piece
+  , Resource(..)
+  , PieceType
+  )
 where
 
 import           Grid                           ( Grid
@@ -11,6 +18,7 @@ import           Control.Monad.Extra            ( whileM
                                                 , foldM
                                                 )
 import           Control.Lens
+import           Control.Monad.State
 
 
 data PieceType = Leader | Drone | Tower | FastDrone deriving (Show)
@@ -40,6 +48,7 @@ data Game = Game {
       , _freeResources :: [Resource]
       , _gameGrid :: Grid
                  } deriving (Show)
+type GameMonad = State Game
 
 makeLenses ''Game
 
@@ -72,6 +81,10 @@ twoPlayersGame = Game
   , _freeResources = []
   , _gameGrid      = hexagonGrid 5
   }
+
+--movePiece :: Game -> Game
+--movePiece = over (gamePlayers . _1 . playerPieces . piecePosition) game
+
 
 executePlayerAction :: Player -> Game -> Action -> Game
 executePlayerAction player game (Move position) = game
