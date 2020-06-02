@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 3cb295427da4a8f45eea3c47f44de9e5b21bffff769c5caee7d50255972e4ea6
+-- hash: 2313a44d1dfdc8199acacee6ba1941ce2a6d0a48c2e14c0ff5233bec93a5af82
 
 name:           hextech-graphics
 version:        0.1.0
@@ -22,8 +22,10 @@ library
   hs-source-dirs:
       src
   build-depends:
-      base >=4.9.1.0 && <5
+      array
+    , base >=4.9.1.0 && <5
     , brittany
+    , containers
     , extra
     , flow
     , hlint
@@ -49,8 +51,10 @@ executable hextech-graphics
       src
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.9.1.0 && <5
+      array
+    , base >=4.9.1.0 && <5
     , brittany
+    , containers
     , extra
     , flow
     , hextech-graphics
@@ -74,8 +78,10 @@ test-suite hextech-graphics-test
       test
   ghc-options: -Wall
   build-depends:
-      base >=4.9.1.0 && <5
+      array
+    , base >=4.9.1.0 && <5
     , brittany
+    , containers
     , extra
     , flow
     , hextech-graphics

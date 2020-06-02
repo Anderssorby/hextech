@@ -15,4 +15,5 @@ import           Game
 
 
 main :: IO ()
-main = makeWindow
+main = do
+  makeWindow

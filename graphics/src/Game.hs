@@ -7,6 +7,8 @@ module Game
   , Piece
   , Resource(..)
   , PieceType
+  , runGame
+  , runRound
   )
 where
 
@@ -19,9 +21,11 @@ import           Control.Monad.Extra            ( whileM
                                                 )
 import           Control.Lens
 import           Control.Monad.State
+import qualified Data.Map.Strict               as Map
+import           Data.Map.Strict                ( Map )
 
 
-data PieceType = Leader | Drone | Tower | FastDrone deriving (Show)
+data PieceType = Leader | Drone | Tower | FastDrone deriving (Show, Eq, Ord)
 
 pieceStrength :: PieceType -> Int
 pieceStrength Leader    = 3
@@ -29,28 +33,48 @@ pieceStrength Drone     = 1
 pieceStrength Tower     = 3
 pieceStrength FastDrone = 1
 
-data ResourceType = Pluss | Star deriving (Show)
+data ResourceType = Plus | Star deriving (Show, Eq)
 
 type GridPosition = (Int, Int, Int)
 
-data Resource = FreeResource ResourceType GridPosition deriving (Show)
+data Resource = FreeResource ResourceType GridPosition deriving (Show, Eq)
 
-data Piece = Piece {piecePosition :: GridPosition, pieceType :: PieceType} deriving (Show)
+data Piece = Piece
+    {
+    --piecePosition :: GridPosition
+     pieceType :: PieceType
+    } deriving (Show, Eq, Ord)
 
 makeLenses ''Piece
 
-data Player = Player {playerName :: String, playerPieces :: [Piece], playerResources :: [ResourceType]} deriving (Show)
+data Player = Player
+    { playerName :: String
+    --, playerPieces :: [Piece]
+    --, playerResources :: [ResourceType]
+    } deriving (Show, Eq, Ord)
 
 makeLenses ''Player
 
-data Game = Game {
-    _gamePlayers :: [Player]
-      , _freeResources :: [Resource]
-      , _gameGrid :: Grid
-                 } deriving (Show)
-type GameMonad = State Game
+data Game = Game
+      { gamePlayers :: [Player]
+      , playerPieces :: Map Player [Piece]
+      , piecePositions :: Map Piece GridPosition
+      --, playerResources :: Map Player [ResourceType]
+      --, playerNames :: Map Player String
+      , freeResources :: [Resource]
+      , gameGrid :: Grid
+      } deriving (Show)
+
+
+type GameState = State Game
 
 makeLenses ''Game
+
+movePiece :: Piece -> GridPosition -> State Game ()
+movePiece piece pos = do
+  game <- get
+  put (game { piecePositions = Map.insert piece pos $ piecePositions game })
+  return ()
 
 data Action
     = Move GridPosition
@@ -60,51 +84,43 @@ data Action
     | Attack GridPosition
 
 twoPlayersGame :: Game
-twoPlayersGame = Game
-  { _gamePlayers   = [ Player
-                       { playerName      = "Anders"
-                       , playerPieces    = [ Piece { piecePosition = (0, 0, 0)
-                                                   , pieceType     = Leader
-                                                   }
-                                           ]
-                       , playerResources = []
-                       }
-                     , Player
-                       { playerName      = "Antoine"
-                       , playerPieces    = [ Piece { piecePosition = (0, 0, 0)
-                                                   , pieceType     = Leader
-                                                   }
-                                           ]
-                       , playerResources = []
-                       }
-                     ]
-  , _freeResources = []
-  , _gameGrid      = hexagonGrid 5
-  }
+twoPlayersGame =
 
---movePiece :: Game -> Game
---movePiece = over (gamePlayers . _1 . playerPieces . piecePosition) game
+  let anders      = Player { playerName = "Anders" }
+      antoine     = Player { playerName = "Antoine" }
+      leaderPiece = Piece { pieceType = Leader }
+      players     = [anders, antoine]
+  in  Game
+        { gamePlayers   = players
+        , playerPieces  = Map.fromList
+                            [(anders, [leaderPiece]), (antoine, [leaderPiece])]
+        , freeResources = []
+        , gameGrid      = hexagonGrid 5
+        }
 
+executePlayerAction :: Player -> Action -> State Game ()
+executePlayerAction player (Move position) = return ()
+executePlayerAction player action          = return ()
 
-executePlayerAction :: Player -> Game -> Action -> Game
-executePlayerAction player game (Move position) = game
-executePlayerAction player game action          = game
+executePlayerActions :: Player -> [Action] -> State Game ()
+executePlayerActions player actions =
+  foldM (\_ action -> executePlayerAction player action) () actions
 
-executePlayerActions :: Game -> Player -> [Action] -> Game
-executePlayerActions game player actions =
-  foldl (executePlayerAction player) game actions
+runRound :: (Player -> [Action]) -> State Game ()
+runRound getActions = do
+  game <- get
+  let players = gamePlayers game
+  foldM (\_ p -> runPlayerRound getActions p) () players
 
-runRound :: Monad m => Game -> (Player -> m [Action]) -> m Game
-runRound game getActions = do
-  players <- return $ view gamePlayers game
-  foldM (\g p -> runPlayerRound g getActions p) game players
+runPlayerRound :: (Player -> [Action]) -> Player -> State Game ()
+runPlayerRound getActions player = do
+  game <- get
+  let actions = getActions player
+  executePlayerActions player actions
+  return ()
 
-runPlayerRound :: Monad m => Game -> (Player -> m [Action]) -> Player -> m Game
-runPlayerRound game getActions player = do
-  actions <- getActions player
-  return $ executePlayerActions game player actions
-
-runGame :: Monad m => Game -> (Player -> m [Action]) -> m Game
-runGame game getActions = do
-  game <- runRound game getActions
-  runGame game getActions
+runGame :: (Player -> [Action]) -> State Game ()
+runGame getActions = do
+  game <- get
+  runRound getActions
+  runGame getActions
