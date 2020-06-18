@@ -91,11 +91,13 @@ twoPlayersGame =
       leaderPiece = Piece { pieceType = Leader }
       players     = [anders, antoine]
   in  Game
-        { gamePlayers   = players
-        , playerPieces  = Map.fromList
-                            [(anders, [leaderPiece]), (antoine, [leaderPiece])]
-        , freeResources = []
-        , gameGrid      = hexagonGrid 5
+        { gamePlayers    = players
+        , playerPieces   = Map.fromList
+                             [(anders, [leaderPiece]), (antoine, [leaderPiece])]
+        , piecePositions = Map.fromList
+          [(leaderPiece, (1, 0, 0)), (leaderPiece, (2, 3, 1))]
+        , freeResources  = []
+        , gameGrid       = hexagonGrid 5
         }
 
 executePlayerAction :: Player -> Action -> State Game ()

@@ -29,12 +29,16 @@ import           Grid                           ( Grid
                                                 , gridTiles
                                                 , Tile
                                                 )
+import qualified Game
+
+import           Control.Monad.State
 
 data Intent
   = SelectSurface Direction
   | Idle
   | StartGame
-  | Quit
+  | ShowMenu
+  | Quit deriving (Show)
 
 
 data Direction
@@ -42,7 +46,7 @@ data Direction
   | Up
   | Down
   | Left
-  | Right
+  | Right deriving (Show)
 
 
 data Color = White | Red | Blue | Green | Yellow
@@ -55,6 +59,10 @@ class Monad m => CameraControl m where
   adjustCamera :: Camera -> m ()
   disableZoom :: m ()
   enableZoom :: m ()
+
+data Display
+    = Playing Game.Game
+    | Menu Text deriving (Show)
 
 {-| Scale a surface to another surface
 -}
@@ -90,6 +98,8 @@ getKey (SDL.KeyboardEventData _ SDL.Pressed False keysym) =
   case SDL.keysymKeycode keysym of
     SDL.KeycodeEscape -> Quit
     SDL.KeycodeQ      -> Quit
+    SDL.KeycodeM      -> ShowMenu
+    SDL.KeycodeG      -> StartGame
     SDL.KeycodeUp     -> SelectSurface Up
     SDL.KeycodeDown   -> SelectSurface Down
     SDL.KeycodeLeft   -> SelectSurface Left
@@ -108,12 +118,29 @@ data SurfaceMap a = SurfaceMap
 
 {-| Update the system from the intent
 -}
-runIntent :: (Monad m) => Intent -> m Bool
-runIntent Quit                = pure False
-runIntent Idle                = pure True
-runIntent StartGame           = pure True
-runIntent (SelectSurface key) = pure True
-
+runIntent :: Intent -> IO (State Display Bool)
+runIntent Quit     = return $ return False
+runIntent Idle     = return $ return True
+runIntent ShowMenu = do
+  let state = do
+        display <- get
+        put (Menu "Hello world")
+        return True
+  --putStrLn "ShowMenu"
+  return state
+runIntent StartGame = do
+  let state = do
+        display <- get
+        put (Playing Game.twoPlayersGame)
+        return True
+  --putStrLn "StartGame"
+  return state
+runIntent (SelectSurface key) = do
+  let state = do
+        display <- get
+        return True
+  --putStrLn ("SelectSurface" ++ show key)
+  return state
 
 {-| Renderer
 -}
@@ -162,24 +189,37 @@ conditionallyRun :: (Monad m) => m a -> Bool -> m Bool
 conditionallyRun m True  = True <$ m
 conditionallyRun _ False = pure False
 
+drawLoop :: SDL.Renderer -> IO Bool
+drawLoop r = do
+  let startState = Menu "Menu"
+  intent <- mkIntent <$> SDL.pollEvent
+  putStrLn $ show intent
+  state <- runIntent intent
+  putStrLn "Drawing"
+  let (continue, finalState) = runState state startState
+  putStrLn $ show finalState
+  putStrLn $ "continue=" ++ show continue
+  conditionallyRun (draw r) continue
+
 makeWindow :: IO ()
 makeWindow = withSDL $ withWindow "HexTech" (1000, 1000) $ \w ->
   withRenderer w $ \r -> do
+    putStrLn "withRenderer"
 
-    screen <- SDL.getWindowSurface w
+    --screen <- SDL.getWindowSurface w
     --pixelFormat <- SDL.surfaceFormat screen
     --images <- mapM SDL.loadBMP surfacePaths
     --surfaces <- mapM (\c -> SDL.convertSurface c pixelFormat) images
 
+    --let game = Game.twoPlayersGame
     --let doRender = renderScaled r screen
     --doRender $ help surfaces
 
-    whileM $ mkIntent <$> SDL.pollEvent >>= runIntent >>= conditionallyRun
-      (draw r)
+    whileM $ drawLoop r
 
     --mapM SDL.freeSurface images
     --mapM SDL.freeSurface surfaces
-    SDL.freeSurface screen
+    --SDL.freeSurface screen
 
 gridToPixels :: Grid -> [Vector (SDL.Point SDL.V2 CInt)]
 gridToPixels grid = []
