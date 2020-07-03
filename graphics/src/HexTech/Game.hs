@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Game
+module HexTech.Game
   ( twoPlayersGame
   , Action(..)
   , Player
@@ -12,7 +12,7 @@ module Game
   )
 where
 
-import           Grid                           ( Grid
+import           HexTech.Grid                   ( Grid
                                                 , hexagonGrid
                                                 )
 import           Control.Monad.Extra            ( whileM
@@ -53,27 +53,26 @@ data Player = Player
     --, playerResources :: [ResourceType]
     } deriving (Show, Eq, Ord)
 
-makeLenses ''Player
+makeClassy ''Player
 
 data Game = Game
-      { gamePlayers :: [Player]
-      , playerPieces :: Map Player [Piece]
-      , piecePositions :: Map Piece GridPosition
+      { _gamePlayers :: [Player]
+      , _playerPieces :: Map Player [Piece]
+      , _piecePositions :: Map Piece GridPosition
       --, playerResources :: Map Player [ResourceType]
       --, playerNames :: Map Player String
-      , freeResources :: [Resource]
-      , gameGrid :: Grid
+      , _freeResources :: [Resource]
+      , _gameGrid :: Grid
       } deriving (Show)
 
 
-type GameState = State Game
-
-makeLenses ''Game
+makeClassy ''Game
 
 movePiece :: Piece -> GridPosition -> State Game ()
 movePiece piece pos = do
   game <- get
-  put (game { piecePositions = Map.insert piece pos $ piecePositions game })
+  put
+    (set piecePositions (Map.insert piece pos $ view piecePositions game) game)
   return ()
 
 data Action
@@ -91,13 +90,13 @@ twoPlayersGame =
       leaderPiece = Piece { pieceType = Leader }
       players     = [anders, antoine]
   in  Game
-        { gamePlayers    = players
-        , playerPieces   = Map.fromList
-                             [(anders, [leaderPiece]), (antoine, [leaderPiece])]
-        , piecePositions = Map.fromList
+        { _gamePlayers    = players
+        , _playerPieces   = Map.fromList
+                              [(anders, [leaderPiece]), (antoine, [leaderPiece])]
+        , _piecePositions = Map.fromList
           [(leaderPiece, (1, 0, 0)), (leaderPiece, (2, 3, 1))]
-        , freeResources  = []
-        , gameGrid       = hexagonGrid 5
+        , _freeResources  = []
+        , _gameGrid       = hexagonGrid 5
         }
 
 executePlayerAction :: Player -> Action -> State Game ()
@@ -111,7 +110,7 @@ executePlayerActions player actions =
 runRound :: (Player -> [Action]) -> State Game ()
 runRound getActions = do
   game <- get
-  let players = gamePlayers game
+  let players = game ^. gamePlayers
   foldM (\_ p -> runPlayerRound getActions p) () players
 
 runPlayerRound :: (Player -> [Action]) -> Player -> State Game ()

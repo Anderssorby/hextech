@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DeriveTraversable #-}
 
-module Graphics
+module HexTech.Graphics
   ( CameraControl
   , makeWindow
   )
@@ -25,11 +25,14 @@ import           Prelude                 hiding ( Left
 
 import           Foreign.C.Types                ( CInt(..) )
 import           Data.Text                      ( Text )
-import           Grid                           ( Grid
+import           HexTech.Grid                   ( Grid
                                                 , gridTiles
                                                 , Tile
+                                                , tileCoords
+                                                , getAxialCoords
                                                 )
-import qualified Game
+
+import qualified HexTech.Game                  as Game
 
 import           Control.Monad.State
 
@@ -201,28 +204,39 @@ drawLoop r = do
   putStrLn $ "continue=" ++ show continue
   conditionallyRun (draw r) continue
 
+{-| Graphics entry point
+-}
 makeWindow :: IO ()
 makeWindow = withSDL $ withWindow "HexTech" (1000, 1000) $ \w ->
   withRenderer w $ \r -> do
-    putStrLn "withRenderer"
-
-    --screen <- SDL.getWindowSurface w
-    --pixelFormat <- SDL.surfaceFormat screen
-    --images <- mapM SDL.loadBMP surfacePaths
-    --surfaces <- mapM (\c -> SDL.convertSurface c pixelFormat) images
-
-    --let game = Game.twoPlayersGame
-    --let doRender = renderScaled r screen
-    --doRender $ help surfaces
+    --putStrLn "withRenderer"
 
     whileM $ drawLoop r
 
-    --mapM SDL.freeSurface images
-    --mapM SDL.freeSurface surfaces
-    --SDL.freeSurface screen
 
 gridToPixels :: Grid -> [Vector (SDL.Point SDL.V2 CInt)]
-gridToPixels grid = []
+gridToPixels grid = do
+  let tiles = gridTiles grid
+  row  <- tiles
+  tile <- row
+  let
+    (x, y)    = getAxialCoords $ tileCoords tile
+    lineWidth = 0
+    size      = 50 :: Float
+    xOffset   = sqrt 3 * size :: Float
+    yOffset   = 1.5 * size :: Float
+    py =
+      round $ fromIntegral x + yOffset * fromIntegral y - 2 * lineWidth :: Int
+    px =
+      ( round
+      $ fromIntegral x
+      + xOffset
+      * (fromIntegral x + 0.5 * fromIntegral (y `rem` 2 :: Int))
+      - 2
+      * lineWidth
+      ) :: Int
+
+  return $ makeHexagon (px, py) $ round size
 
 makeGrid :: [Vector (SDL.Point SDL.V2 CInt)]
 makeGrid = map tile coords

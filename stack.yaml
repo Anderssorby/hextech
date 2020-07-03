@@ -29,7 +29,7 @@ resolver: lts-15.10
 #   - auto-update
 #   - wai
 packages:
-- .
+- ./backend
 - ./graphics
 # Dependency packages to be pulled from upstream that are not in the resolver.
 # These entries can reference officially published versions as well as
@@ -42,6 +42,10 @@ packages:
 #
 extra-deps:
 - lens-4.19
+- 'sdl2-mixer-1.1.0'
+- 'sdl2-ttf-2.0.2'
+- 'animate-0.6.0'
+- 'key-state-0.1.0'
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

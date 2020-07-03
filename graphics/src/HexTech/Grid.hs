@@ -1,10 +1,12 @@
-module Grid
+module HexTech.Grid
   ( Grid
   , Tile
   , AxialCoord(..)
   , gridTiles
+  , getAxialCoords
   , hexagonGrid
   , toCubeCoord
+  , tileCoords
   )
 where
 
@@ -18,7 +20,13 @@ gridTiles (Grid tiles) = tiles
 
 data AxialCoord = AxialCoord (Int, Int) deriving (Show, Eq)
 
+getAxialCoords :: AxialCoord -> (Int, Int)
+getAxialCoords (AxialCoord coords) = coords
+
 data Tile = Tile AxialCoord deriving (Show, Eq)
+
+tileCoords :: Tile -> AxialCoord
+tileCoords (Tile coords) = coords
 
 toCubeCoord :: AxialCoord -> (Int, Int, Int)
 toCubeCoord (AxialCoord (q, r)) = (q, r, (-q) + (-r))

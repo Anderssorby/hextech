@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.1.
+-- This file has been generated from package.yaml by hpack version 0.34.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2313a44d1dfdc8199acacee6ba1941ce2a6d0a48c2e14c0ff5233bec93a5af82
+-- hash: 3e113b2d25c0527fd9b6fd90725e4d37f0b687316bbb11aa6606ebeeaebf7c9c
 
 name:           hextech-graphics
 version:        0.1.0
@@ -13,59 +13,98 @@ build-type:     Simple
 library
   exposed-modules:
       Common
-      Game
-      Graphics
-      Grid
-      Main
+      HexTech
+      HexTech.Config
+      HexTech.Engine.Types
+      HexTech.Engine.Vars
+      HexTech.Game
+      HexTech.Graphics
+      HexTech.Grid
+      HexTech.Resource
+      HexTech.State
+      HexTech.Wrapper.SDLInput
   other-modules:
       Paths_hextech_graphics
   hs-source-dirs:
       src
+  default-extensions: DuplicateRecordFields FlexibleContexts FlexibleInstances GeneralizedNewtypeDeriving LambdaCase NamedFieldPuns ScopedTypeVariables OverloadedStrings
+  ghc-options: -Wall
   build-depends:
-      array
+      StateVar
+    , aeson
+    , animate
+    , array
     , base >=4.9.1.0 && <5
     , brittany
+    , bytestring
     , containers
     , extra
     , flow
     , hlint
+    , key-state
     , lens
+    , linear
     , monad-logger >=0.3 && <0.4
     , mtl
+    , random
+    , safe
+    , safe-exceptions
     , sdl2
     , sdl2-image
+    , sdl2-mixer
+    , sdl2-ttf
     , template-haskell
     , text
+    , text-conversions
     , vector
   default-language: Haskell2010
 
 executable hextech-graphics
-  main-is: Main.hs
+  main-is: HexTech.hs
   other-modules:
       Common
-      Game
-      Graphics
-      Grid
+      HexTech.Config
+      HexTech.Engine.Types
+      HexTech.Engine.Vars
+      HexTech.Game
+      HexTech.Graphics
+      HexTech.Grid
+      HexTech.Resource
+      HexTech.State
+      HexTech.Wrapper.SDLInput
       Paths_hextech_graphics
   hs-source-dirs:
       src
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  default-extensions: DuplicateRecordFields FlexibleContexts FlexibleInstances GeneralizedNewtypeDeriving LambdaCase NamedFieldPuns ScopedTypeVariables OverloadedStrings
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      array
+      StateVar
+    , aeson
+    , animate
+    , array
     , base >=4.9.1.0 && <5
     , brittany
+    , bytestring
     , containers
     , extra
     , flow
     , hextech-graphics
     , hlint
+    , key-state
     , lens
+    , linear
     , monad-logger >=0.3 && <0.4
     , mtl
+    , random
+    , safe
+    , safe-exceptions
     , sdl2
     , sdl2-image
+    , sdl2-mixer
+    , sdl2-ttf
     , template-haskell
     , text
+    , text-conversions
     , vector
   default-language: Haskell2010
 
@@ -76,23 +115,36 @@ test-suite hextech-graphics-test
       Paths_hextech_graphics
   hs-source-dirs:
       test
-  ghc-options: -Wall
+  default-extensions: DuplicateRecordFields FlexibleContexts FlexibleInstances GeneralizedNewtypeDeriving LambdaCase NamedFieldPuns ScopedTypeVariables OverloadedStrings
+  ghc-options: -Wall -Wall
   build-depends:
-      array
+      StateVar
+    , aeson
+    , animate
+    , array
     , base >=4.9.1.0 && <5
     , brittany
+    , bytestring
     , containers
     , extra
     , flow
     , hextech-graphics
     , hlint
     , hspec >=2.0.0
+    , key-state
     , lens
+    , linear
     , monad-logger >=0.3 && <0.4
     , mtl
+    , random
+    , safe
+    , safe-exceptions
     , sdl2
     , sdl2-image
+    , sdl2-mixer
+    , sdl2-ttf
     , template-haskell
     , text
+    , text-conversions
     , vector
   default-language: Haskell2010
