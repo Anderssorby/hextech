@@ -153,9 +153,9 @@ drawHorizontalScrollImage getTex scale (x, y) = do
       dim'
     )
 
-drawBlackOverlay'
+drawBlackOverlay
   :: (MonadReader Config m, SDLRenderer m, MonadIO m) => Percent -> m ()
-drawBlackOverlay' (Percent percent) = do
+drawBlackOverlay (Percent percent) = do
   renderer <- asks cRenderer
   SDL.rendererDrawBlendMode renderer $= SDL.BlendAlphaBlend
   SDL.rendererDrawColor renderer $= (V4 0 0 0 (truncate $ 255 * percent))

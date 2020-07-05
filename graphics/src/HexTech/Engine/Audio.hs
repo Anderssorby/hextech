@@ -8,22 +8,24 @@ import           Control.Exception.Safe         ( MonadThrow
                                                 , catch
                                                 )
 
-import           HexTech.Config
+import           HexTech.Config                 ( Config(..)
+                                                , Resources(..)
+                                                )
 
 class Monad m => Audio m where
   playGameMusic :: m ()
   stopGameMusic :: m ()
-  playJumpSfx :: m ()
-  playDuckSfx :: m ()
-  playPointSfx :: m ()
-  playBirdSfx :: m ()
-  playHurtSfx :: m ()
-  playLavaSfx :: m ()
-  playRockSfx :: m ()
-  playQuakeSfx :: m ()
-  playDeathSfx :: m ()
-  playRecoverSfx :: m ()
-  playStockSfx :: m ()
+  --playJumpSfx :: m ()
+  --playDuckSfx :: m ()
+  --playPointSfx :: m ()
+  --playBirdSfx :: m ()
+  --playHurtSfx :: m ()
+  --playLavaSfx :: m ()
+  --playRockSfx :: m ()
+  --playQuakeSfx :: m ()
+  --playDeathSfx :: m ()
+  --playRecoverSfx :: m ()
+  --playStockSfx :: m ()
   lowerGameMusic :: m ()
   raiseGameMusic :: m ()
 

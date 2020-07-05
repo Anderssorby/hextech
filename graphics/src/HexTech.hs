@@ -4,24 +4,37 @@ module HexTech
 where
 
 import           Control.Lens
-import           Control.Monad                  ( foldM )
-import           Control.Monad.Extra            ( whileM )
 import           Control.Exception.Safe         ( MonadThrow
                                                 , MonadCatch
-                                                , catch
                                                 )
 import           Control.Concurrent             ( threadDelay )
+import           Control.Monad.State
+import           Control.Monad.Reader
+import qualified SDL
+import qualified SDL.Mixer                     as Mixer
+import qualified SDL.Font                      as Font
+import           Data.Text
+import qualified Data.Text.IO                  as T
+import           KeyState
+
 
 import           HexTech.Graphics               ( makeWindow )
 import           HexTech.Game                   ( Game(..) )
-import           HexTech.Resource
-import           HexTech.Engine.Vars
+import           HexTech.Engine.Types           ( Clock(..)
+                                                , Logger(..)
+                                                , frameDeltaMilliseconds
+                                                )
 import           HexTech.Engine.Renderer        ( Renderer(..)
                                                 , drawTextureSprite
                                                 , clearScreen'
                                                 , drawScreen'
                                                 )
-import           HexTech.Engine.Audio           ( Audio(..) )
+import           HexTech.Engine.Audio           ( Audio(..)
+                                                , playGameMusic'
+                                                , stopGameMusic'
+                                                , lowerGameMusic'
+                                                , raiseGameMusic'
+                                                )
 import           HexTech.Camera                 ( CameraControl(..)
                                                 , initCamera
                                                 )
@@ -44,7 +57,16 @@ import           HexTech.Scene.Title            ( Title(..)
                                                 , titleVars
                                                 , titleStep'
                                                 )
-import           HexTech.Resource               ( loadResources )
+import           HexTech.Scene.Play             ( HasPlayVars
+                                                , initPlayVars
+                                                , playVars
+                                                , playStep
+                                                , pauseStep
+                                                )
+import           HexTech.Resource               ( loadResources
+                                                , Resources(..)
+                                                , freeResources
+                                                )
 import           HexTech.Input                  ( HasInput
                                                 , iEscape
                                                 , iQuit
@@ -62,14 +84,6 @@ import           HexTech.Wrapper.SDLRenderer    ( SDLRenderer(..)
                                                 , clearRenderer'
                                                 , queryTexture'
                                                 )
-import           Control.Monad.State
-import           Control.Monad.Reader
-import qualified SDL
-import qualified SDL.Mixer                     as Mixer
-import qualified SDL.Font                      as Font
-import           Data.Text
-import qualified Data.Text.IO                  as T
-import           KeyState
 
 
 
@@ -102,25 +116,22 @@ main = do
   SDL.quit
 
 
-class Monad m => Logger m where
-  logText :: Text -> m ()
-
-frameDeltaMilliseconds :: Int
-frameDeltaMilliseconds = 16
-
 {-| The main loop of our GUI program handling State, Logging, Input, Rendering and so on.
 -}
 mainLoop
   :: ( MonadReader Config m
      , MonadState Vars m
-     --, Audio m
+     , Audio m
      --, AudioSfx m
      , Logger m
      , Clock m
      , CameraControl m
      , Renderer m
+     , SDLRenderer m
+     , MonadIO m
      , HasInput m
      , Title m
+     , SceneManager m
      )
      --, Play m
      --, Pause m
@@ -152,8 +163,8 @@ mainLoop = do
   step scene = do
     case scene of
       Scene'Title -> titleStep
-      --Scene'Play     -> playStep
-      --Scene'Pause    -> pauseStep
+      Scene'Play  -> playStep
+      Scene'Pause -> pauseStep
       --Scene'Death    -> deathStep
       --Scene'GameOver -> gameOverStep
       Scene'Quit  -> return ()
@@ -162,17 +173,17 @@ mainLoop = do
   stepScene scene nextScene = do
     when (nextScene /= scene) $ do
       case nextScene of
-        Scene'Title    -> titleTransition
-        --Scene'Play  -> case scene of
-        --  Scene'Title -> playTransition
-        --  Scene'Pause -> pauseToPlay
-        --  _           -> return ()
+        Scene'Title -> titleTransition
+        Scene'Play  -> case scene of
+          Scene'Title -> playTransition
+          Scene'Pause -> pauseToPlay
+          _           -> return ()
         --Scene'Death -> case scene of
         --  Scene'Play -> deathTransition
         --  _          -> return ()
-        --Scene'Pause -> case scene of
-        --  Scene'Play -> playToPause
-        --  _          -> return ()
+        Scene'Pause -> case scene of
+          Scene'Play -> playToPause
+          _          -> return ()
         Scene'GameOver -> return ()
         Scene'Quit     -> return ()
       modify (\v -> v { vScene = nextScene })
@@ -182,9 +193,27 @@ titleTransition = do
   adjustCamera initCamera
   modify $ titleVars .~ initTitleVars
 
---instance Audio HexTech where
---  playGameMusic  = playGameMusic'
---  stopGameMusic  = stopGameMusic'
+
+playTransition :: (HasPlayVars a, MonadState a m, Audio m) => m ()
+playTransition = do
+  --PlayVars { pvUpcomingObstacles } <- gets (view playVars)
+  --modify $ playVars .~ (initPlayVars pvUpcomingObstacles)
+  playGameMusic
+
+--deathTransition :: (Audio m) => m ()
+--deathTransition = do
+--  stopGameMusic
+--  playDeathSfx
+
+pauseToPlay :: Audio m => m ()
+pauseToPlay = raiseGameMusic
+
+playToPause :: Audio m => m ()
+playToPause = lowerGameMusic
+
+instance Audio HexTech where
+  playGameMusic  = playGameMusic'
+  stopGameMusic  = stopGameMusic'
 --  playJumpSfx    = playJumpSfx'
 --  playDuckSfx    = playDuckSfx'
 --  playPointSfx   = playPointSfx'
@@ -195,12 +224,10 @@ titleTransition = do
 --  playRockSfx    = playRockSfx'
 --  playRecoverSfx = playRecoverSfx'
 --  playDeathSfx   = playDeathSfx'
---  lowerGameMusic = lowerGameMusic'
---  raiseGameMusic = raiseGameMusic'
+  lowerGameMusic = lowerGameMusic'
+  raiseGameMusic = raiseGameMusic'
 --  playStockSfx   = playStockSfx'
 --
-class Monad m => Clock m where
-  delayMilliseconds :: Int -> m ()
 
 delayMilliseconds' :: Int -> IO ()
 delayMilliseconds' ms = threadDelay (1000 * ms)

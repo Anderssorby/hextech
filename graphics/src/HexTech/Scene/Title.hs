@@ -12,15 +12,18 @@ import           Control.Monad.State            ( MonadState(..)
 import           KeyState
 
 import           HexTech.Config
-import           HexTech.Engine.Types
-import           HexTech.Engine.Common
-import           HexTech.Engine.Renderer
-import           HexTech.Input
+--import           HexTech.Engine.Types
+--import           HexTech.Engine.Common
+import           HexTech.Engine.Renderer        ( Renderer )
+import qualified HexTech.Engine.Renderer       as Renderer
+import           HexTech.Input                  ( HasInput(..)
+                                                , iSpace
+                                                )
 import           HexTech.Scene
 
 data TitleVars = TitleVars
   {
-      {-tvDinoPos :: Animate.Position DinoKey Seconds
+  {-tvDinoPos :: Animate.Position DinoKey Seconds
   , tvMountainPos :: Animate.Position MountainKey Seconds
   , tvRiverPos :: Animate.Position RiverKey Seconds
   , -}
@@ -131,7 +134,9 @@ drawTitle = do
   --
   --drawHiscore
 
-  drawTitleText (300, 180)
+  Renderer.drawTitleText (300, 180)
 
-  when (titleShowPressSpace $ tvFlashing tv) $ drawPressSpaceText (550, 500)
-  when (titleShowPressEscape $ tvFlashing tv) $ drawPressEscapeText (490, 500)
+  when (titleShowPressSpace $ tvFlashing tv)
+    $ Renderer.drawPressSpaceText (550, 500)
+  when (titleShowPressEscape $ tvFlashing tv)
+    $ Renderer.drawPressEscapeText (490, 500)

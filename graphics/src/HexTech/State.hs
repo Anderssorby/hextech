@@ -22,6 +22,10 @@ import           HexTech.Scene.Title            ( TitleVars
                                                 , HasTitleVars(..)
                                                 , initTitleVars
                                                 )
+import           HexTech.Scene.Play             ( PlayVars(..)
+                                                , initPlayVars
+                                                , HasPlayVars(..)
+                                                )
 import           HexTech.Camera                 ( Camera(..)
                                                 , initCamera
                                                 , moveCamera
@@ -35,7 +39,7 @@ data Vars = Vars
   , vScene :: Scene
   , vNextScene :: Scene
   , vTitle :: TitleVars
-  --, vPlay :: PlayVars
+  , vPlay :: PlayVars
   --, vGameOver :: GameOverVars
   , vInput :: Input
   , vCamera :: Camera
@@ -44,8 +48,13 @@ data Vars = Vars
 makeClassy_ ''Vars
 
 initVars :: Vars
-initVars =
-  Vars twoPlayersGame Scene'Title Scene'Title initTitleVars initInput initCamera
+initVars = Vars twoPlayersGame
+                Scene'Title
+                Scene'Title
+                initTitleVars
+                initPlayVars
+                initInput
+                initCamera
 
 
 toScene' :: MonadState Vars m => Scene -> m ()
@@ -59,9 +68,9 @@ instance HasGame Vars where
 --
 instance HasTitleVars Vars where
   titleVars = lens vTitle (\v s -> v { vTitle = s })
---
---instance HasPlayVars Vars where
---  playVars = lens vPlay (\v s -> v { vPlay = s })
+
+instance HasPlayVars Vars where
+  playVars = lens vPlay (\v s -> v { vPlay = s })
 --
 --instance HasGameOverVars Vars where
 --  gameOverVars = lens vGameOver (\v s -> v { vGameOver = s })

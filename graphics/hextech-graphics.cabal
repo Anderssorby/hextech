@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: af35bc66343db1a8d661a28da940d2810a88061915c8c3fd9513c904e44f33e9
+-- hash: 05878fef03ae4c290514901e26da96333b29d197aab683eede64e613b2d2c18d
 
 name:           hextech-graphics
 version:        0.1.0
@@ -27,6 +27,7 @@ library
       HexTech.Input
       HexTech.Resource
       HexTech.Scene
+      HexTech.Scene.Play
       HexTech.Scene.Title
       HexTech.State
       HexTech.Wrapper.SDLInput
@@ -85,6 +86,7 @@ executable hextech-graphics
       HexTech.Input
       HexTech.Resource
       HexTech.Scene
+      HexTech.Scene.Play
       HexTech.Scene.Title
       HexTech.State
       HexTech.Wrapper.SDLInput

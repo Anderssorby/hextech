@@ -24,13 +24,13 @@ import           HexTech.Engine.Types
 data Resources = Resources
   { --rMountainSprites :: Animate.SpriteSheet MountainKey SDL.Texture Seconds
   --, rRiverSprites :: Animate.SpriteSheet RiverKey SDL.Texture Seconds
-  --, rJungleSprites :: SDL.Texture
-  --, rGroundSprites :: SDL.Texture
+   rJungleSprites :: SDL.Texture
+  , rGroundSprites :: SDL.Texture
   --, rDinoSprites :: Animate.SpriteSheet DinoKey SDL.Texture Seconds
   --, rBirdSprites :: Animate.SpriteSheet BirdKey SDL.Texture Seconds
   --, rLavaSprites :: Animate.SpriteSheet LavaKey SDL.Texture Seconds
   --, rRockSprites :: Animate.SpriteSheet RockKey SDL.Texture Seconds
-   rGameMusic :: Mixer.Music
+  , rGameMusic :: Mixer.Music
   --, rJumpSfx :: Mixer.Chunk
   --, rDuckSfx :: Mixer.Chunk
   --, rPointSfx :: Mixer.Chunk
@@ -93,8 +93,8 @@ loadResources renderer = do
   --mountainSprites <-
   --  Animate.readSpriteSheetJSON loadTexture "resource/mountain.json" :: IO
   --    (Animate.SpriteSheet MountainKey SDL.Texture Seconds)
-  --jungle         <- loadTexture "resource/jungle.png" (Just alphaColorDef)
-  --ground         <- loadTexture "resource/ground.png" (Just alphaColorDef)
+  jungle         <- loadTexture "resource/jungle.png" (Just alphaColorDef)
+  ground         <- loadTexture "resource/ground.png" (Just alphaColorDef)
   controlsSprite <- loadTexture "resource/controls.png" (Just alphaColorDef)
   --riverSprites   <-
   --  Animate.readSpriteSheetJSON loadTexture "resource/river.json" :: IO
@@ -111,7 +111,7 @@ loadResources renderer = do
   titleSprite <- toTexture =<< Font.shaded titleFont
                                            (V4 0xff 0xff 0xff 0xff)
                                            (V4 0x11 0x08 0x1e 0x2a)
-                                           " DINO RUSH "
+                                           " Hex Tech "
   let drawFont :: Text -> IO SDL.Texture
       drawFont text =
         toTexture =<< Font.solid smallFont (V4 255 255 255 255) text
@@ -151,7 +151,9 @@ loadResources renderer = do
   Font.free smallFont
   Font.free bigFont
   Font.free titleFont
-  return Resources { rGameMusic      = gameMusic
+  return Resources { rJungleSprites  = jungle
+                   , rGroundSprites  = ground
+                   , rGameMusic      = gameMusic
                    , rPauseSprite    = pauseSprite
                    , rSpaceSprite    = spaceSprite
                    , rEscapeSprite   = escapeSprite
