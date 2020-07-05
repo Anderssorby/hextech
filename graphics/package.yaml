@@ -24,6 +24,7 @@ dependencies:
 - sdl2-image
 - sdl2-mixer
 - sdl2-ttf
+- sdl2-gfx
 - StateVar
 - text
 - text-conversions
@@ -41,6 +42,7 @@ default-extensions:
 - NamedFieldPuns
 - ScopedTypeVariables
 - OverloadedStrings
+- TemplateHaskell
 # The library contains all of our application code. The executable
 # defined below is just a thin wrapper.
 library:

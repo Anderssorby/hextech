@@ -1,27 +1,75 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DeriveFoldable #-}
-{-# LANGUAGE DeriveTraversable #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-
 module HexTech
   ( main
   )
 where
 
+import           Control.Lens
 import           Control.Monad                  ( foldM )
 import           Control.Monad.Extra            ( whileM )
+import           Control.Exception.Safe         ( MonadThrow
+                                                , MonadCatch
+                                                , catch
+                                                )
+import           Control.Concurrent             ( threadDelay )
 
 import           HexTech.Graphics               ( makeWindow )
-import           HexTech.Game
+import           HexTech.Game                   ( Game(..) )
+import           HexTech.Resource
 import           HexTech.Engine.Vars
-import           HexTech.Config
-import           HexTech.State
+import           HexTech.Engine.Renderer        ( Renderer(..)
+                                                , drawTextureSprite
+                                                , clearScreen'
+                                                , drawScreen'
+                                                )
+import           HexTech.Engine.Audio           ( Audio(..) )
+import           HexTech.Camera                 ( CameraControl(..)
+                                                , initCamera
+                                                )
+import           HexTech.Config                 ( Config(..) )
+import           HexTech.State                  ( Vars(..)
+                                                , initVars
+                                                , enableZoom'
+                                                , adjustCamera'
+                                                , disableZoom'
+                                                , getInput'
+                                                , setInput'
+                                                , toScene'
+                                                )
+import           HexTech.Scene                  ( Scene(..)
+                                                , SceneManager(..)
+                                                )
+import           HexTech.Scene.Title            ( Title(..)
+                                                , HasTitleVars
+                                                , initTitleVars
+                                                , titleVars
+                                                , titleStep'
+                                                )
+import           HexTech.Resource               ( loadResources )
+import           HexTech.Input                  ( HasInput
+                                                , iEscape
+                                                , iQuit
+                                                , getInput
+                                                , setInput
+                                                , updateInput
+                                                , updateInput'
+                                                )
+import           HexTech.Wrapper.SDLInput       ( SDLInput(..)
+                                                , pollEventPayloads'
+                                                )
+import           HexTech.Wrapper.SDLRenderer    ( SDLRenderer(..)
+                                                , drawTexture'
+                                                , presentRenderer'
+                                                , clearRenderer'
+                                                , queryTexture'
+                                                )
 import           Control.Monad.State
 import           Control.Monad.Reader
 import qualified SDL
 import qualified SDL.Mixer                     as Mixer
 import qualified SDL.Font                      as Font
+import           Data.Text
 import qualified Data.Text.IO                  as T
+import           KeyState
 
 
 
@@ -38,14 +86,14 @@ main = do
   Mixer.openAudio Mixer.defaultAudio 256
   window <- SDL.createWindow
     "Hex Tech"
-    SDL.defaultWindow { SDL.windowInitialSize = V2 1280 720 }
+    SDL.defaultWindow { SDL.windowInitialSize = SDL.V2 1280 720 }
   renderer  <- SDL.createRenderer window (-1) SDL.defaultRenderer
   resources <- loadResources renderer
   --mkObstacles <- streamOfObstacles <$> getStdGen
   let
     cfg =
       Config { cWindow = window, cRenderer = renderer, cResources = resources }
-  runHexTech cfg (initVars mkObstacles) mainLoop
+  runHexTech cfg initVars mainLoop
   SDL.destroyWindow window
   freeResources resources
   Mixer.closeAudio
@@ -54,32 +102,40 @@ main = do
   SDL.quit
 
 
+class Monad m => Logger m where
+  logText :: Text -> m ()
+
+frameDeltaMilliseconds :: Int
+frameDeltaMilliseconds = 16
+
+{-| The main loop of our GUI program handling State, Logging, Input, Rendering and so on.
+-}
 mainLoop
   :: ( MonadReader Config m
      , MonadState Vars m
-     , Audio m
-     , AudioSfx m
+     --, Audio m
+     --, AudioSfx m
      , Logger m
      , Clock m
      , CameraControl m
      , Renderer m
      , HasInput m
      , Title m
-     , Play m
-     , Pause m
-     , Death m
-     , GameOver m
      )
+     --, Play m
+     --, Pause m
+     --, Death m
+     --, GameOver m
   => m ()
 mainLoop = do
   updateInput
   input <- getInput
   clearScreen
-  clearSfx
+  --clearSfx
   scene <- gets vScene
-  updateQuake
+  --updateQuake
   step scene
-  playSfx
+  --playSfx
   drawScreen
   delayMilliseconds frameDeltaMilliseconds
   nextScene <- gets vNextScene
@@ -95,27 +151,115 @@ mainLoop = do
 
   step scene = do
     case scene of
-      Scene'Title    -> titleStep
-      Scene'Play     -> playStep
-      Scene'Pause    -> pauseStep
-      Scene'Death    -> deathStep
-      Scene'GameOver -> gameOverStep
-      Scene'Quit     -> return ()
+      Scene'Title -> titleStep
+      --Scene'Play     -> playStep
+      --Scene'Pause    -> pauseStep
+      --Scene'Death    -> deathStep
+      --Scene'GameOver -> gameOverStep
+      Scene'Quit  -> return ()
+      _           -> return ()
 
   stepScene scene nextScene = do
     when (nextScene /= scene) $ do
       case nextScene of
-        Scene'Title -> titleTransition
-        Scene'Play  -> case scene of
-          Scene'Title -> playTransition
-          Scene'Pause -> pauseToPlay
-          _           -> return ()
-        Scene'Death -> case scene of
-          Scene'Play -> deathTransition
-          _          -> return ()
-        Scene'Pause -> case scene of
-          Scene'Play -> playToPause
-          _          -> return ()
+        Scene'Title    -> titleTransition
+        --Scene'Play  -> case scene of
+        --  Scene'Title -> playTransition
+        --  Scene'Pause -> pauseToPlay
+        --  _           -> return ()
+        --Scene'Death -> case scene of
+        --  Scene'Play -> deathTransition
+        --  _          -> return ()
+        --Scene'Pause -> case scene of
+        --  Scene'Play -> playToPause
+        --  _          -> return ()
         Scene'GameOver -> return ()
         Scene'Quit     -> return ()
       modify (\v -> v { vScene = nextScene })
+
+titleTransition :: (HasTitleVars a, MonadState a m, CameraControl m) => m ()
+titleTransition = do
+  adjustCamera initCamera
+  modify $ titleVars .~ initTitleVars
+
+--instance Audio HexTech where
+--  playGameMusic  = playGameMusic'
+--  stopGameMusic  = stopGameMusic'
+--  playJumpSfx    = playJumpSfx'
+--  playDuckSfx    = playDuckSfx'
+--  playPointSfx   = playPointSfx'
+--  playBirdSfx    = playBirdSfx'
+--  playHurtSfx    = playHurtSfx'
+--  playLavaSfx    = playLavaSfx'
+--  playQuakeSfx   = playQuakeSfx'
+--  playRockSfx    = playRockSfx'
+--  playRecoverSfx = playRecoverSfx'
+--  playDeathSfx   = playDeathSfx'
+--  lowerGameMusic = lowerGameMusic'
+--  raiseGameMusic = raiseGameMusic'
+--  playStockSfx   = playStockSfx'
+--
+class Monad m => Clock m where
+  delayMilliseconds :: Int -> m ()
+
+delayMilliseconds' :: Int -> IO ()
+delayMilliseconds' ms = threadDelay (1000 * ms)
+
+instance HasInput HexTech where
+  updateInput = updateInput'
+  getInput    = getInput'
+  setInput    = setInput'
+
+instance SceneManager HexTech where
+  toScene = toScene'
+
+instance Clock HexTech where
+  delayMilliseconds = liftIO . delayMilliseconds'
+
+instance Logger HexTech where
+  logText = liftIO . T.putStrLn
+
+instance CameraControl HexTech where
+  adjustCamera = adjustCamera'
+  disableZoom  = disableZoom'
+  enableZoom   = enableZoom'
+
+instance SDLRenderer HexTech where
+  drawTexture     = drawTexture'
+  presentRenderer = presentRenderer'
+  clearRenderer   = clearRenderer'
+  queryTexture    = queryTexture'
+
+instance SDLInput HexTech where
+  pollEventPayloads = pollEventPayloads'
+
+instance Renderer HexTech where
+  clearScreen         = clearScreen'
+  drawScreen          = drawScreen'
+  --getDinoAnimations     = getSpriteAnimations (rDinoSprites . cResources)
+  --getLavaAnimations     = getSpriteAnimations (rLavaSprites . cResources)
+  --getRockAnimations     = getSpriteAnimations (rRockSprites . cResources)
+  --getBirdAnimations     = getSpriteAnimations (rBirdSprites . cResources)
+  --getMountainAnimations = getSpriteAnimations (rMountainSprites . cResources)
+  --getRiverAnimations    = getSpriteAnimations (rRiverSprites . cResources)
+  --drawDino              = drawSprite (rDinoSprites . cResources)
+  --drawLava              = drawSprite (rLavaSprites . cResources)
+  --drawRock              = drawSprite (rRockSprites . cResources)
+  --drawBird              = drawSprite (rBirdSprites . cResources)
+  --drawMountain = drawHorizontalScrollSprite (rMountainSprites . cResources) 16
+  --drawJungle = drawHorizontalScrollImage (rJungleSprites . cResources) 8
+  --drawGround = drawHorizontalScrollImage (rGroundSprites . cResources) 2
+  --drawRiver = drawHorizontalScrollSprite (rRiverSprites . cResources) 4
+  --drawBlackOverlay      = drawBlackOverlay'
+  --drawHiscoreText       = drawTextureSprite (rHiscoreSprite . cResources)
+  --drawPauseText       = drawTextureSprite (rPauseSprite . cResources)
+  drawGameOverText    = drawTextureSprite (rGameOverSprite . cResources)
+  drawPressSpaceText  = drawTextureSprite (rSpaceSprite . cResources)
+  drawPressEscapeText = drawTextureSprite (rEscapeSprite . cResources)
+  drawTitleText       = drawTextureSprite (rTitleSprite . cResources)
+  --drawNumber n = drawTextureSprite (flip rNumberSprites n . cResources)
+  drawControlsText    = drawTextureSprite (rControlsSprite . cResources)
+
+
+instance Title HexTech where
+  titleStep = titleStep'

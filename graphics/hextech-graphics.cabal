@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 3e113b2d25c0527fd9b6fd90725e4d37f0b687316bbb11aa6606ebeeaebf7c9c
+-- hash: af35bc66343db1a8d661a28da940d2810a88061915c8c3fd9513c904e44f33e9
 
 name:           hextech-graphics
 version:        0.1.0
@@ -14,20 +14,28 @@ library
   exposed-modules:
       Common
       HexTech
+      HexTech.Camera
       HexTech.Config
+      HexTech.Engine.Audio
+      HexTech.Engine.Common
+      HexTech.Engine.Renderer
       HexTech.Engine.Types
       HexTech.Engine.Vars
       HexTech.Game
       HexTech.Graphics
       HexTech.Grid
+      HexTech.Input
       HexTech.Resource
+      HexTech.Scene
+      HexTech.Scene.Title
       HexTech.State
       HexTech.Wrapper.SDLInput
+      HexTech.Wrapper.SDLRenderer
   other-modules:
       Paths_hextech_graphics
   hs-source-dirs:
       src
-  default-extensions: DuplicateRecordFields FlexibleContexts FlexibleInstances GeneralizedNewtypeDeriving LambdaCase NamedFieldPuns ScopedTypeVariables OverloadedStrings
+  default-extensions: DuplicateRecordFields FlexibleContexts FlexibleInstances GeneralizedNewtypeDeriving LambdaCase NamedFieldPuns ScopedTypeVariables OverloadedStrings TemplateHaskell
   ghc-options: -Wall
   build-depends:
       StateVar
@@ -50,6 +58,7 @@ library
     , safe
     , safe-exceptions
     , sdl2
+    , sdl2-gfx
     , sdl2-image
     , sdl2-mixer
     , sdl2-ttf
@@ -63,19 +72,27 @@ executable hextech-graphics
   main-is: HexTech.hs
   other-modules:
       Common
+      HexTech.Camera
       HexTech.Config
+      HexTech.Engine.Audio
+      HexTech.Engine.Common
+      HexTech.Engine.Renderer
       HexTech.Engine.Types
       HexTech.Engine.Vars
       HexTech.Game
       HexTech.Graphics
       HexTech.Grid
+      HexTech.Input
       HexTech.Resource
+      HexTech.Scene
+      HexTech.Scene.Title
       HexTech.State
       HexTech.Wrapper.SDLInput
+      HexTech.Wrapper.SDLRenderer
       Paths_hextech_graphics
   hs-source-dirs:
       src
-  default-extensions: DuplicateRecordFields FlexibleContexts FlexibleInstances GeneralizedNewtypeDeriving LambdaCase NamedFieldPuns ScopedTypeVariables OverloadedStrings
+  default-extensions: DuplicateRecordFields FlexibleContexts FlexibleInstances GeneralizedNewtypeDeriving LambdaCase NamedFieldPuns ScopedTypeVariables OverloadedStrings TemplateHaskell
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       StateVar
@@ -99,6 +116,7 @@ executable hextech-graphics
     , safe
     , safe-exceptions
     , sdl2
+    , sdl2-gfx
     , sdl2-image
     , sdl2-mixer
     , sdl2-ttf
@@ -115,7 +133,7 @@ test-suite hextech-graphics-test
       Paths_hextech_graphics
   hs-source-dirs:
       test
-  default-extensions: DuplicateRecordFields FlexibleContexts FlexibleInstances GeneralizedNewtypeDeriving LambdaCase NamedFieldPuns ScopedTypeVariables OverloadedStrings
+  default-extensions: DuplicateRecordFields FlexibleContexts FlexibleInstances GeneralizedNewtypeDeriving LambdaCase NamedFieldPuns ScopedTypeVariables OverloadedStrings TemplateHaskell
   ghc-options: -Wall -Wall
   build-depends:
       StateVar
@@ -140,6 +158,7 @@ test-suite hextech-graphics-test
     , safe
     , safe-exceptions
     , sdl2
+    , sdl2-gfx
     , sdl2-image
     , sdl2-mixer
     , sdl2-ttf

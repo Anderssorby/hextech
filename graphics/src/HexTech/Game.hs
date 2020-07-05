@@ -9,6 +9,7 @@ module HexTech.Game
   , PieceType
   , runGame
   , runRound
+  , HasGame(..)
   )
 where
 
@@ -63,7 +64,7 @@ data Game = Game
       --, playerNames :: Map Player String
       , _freeResources :: [Resource]
       , _gameGrid :: Grid
-      } deriving (Show)
+      } deriving (Show, Eq)
 
 
 makeClassy ''Game
