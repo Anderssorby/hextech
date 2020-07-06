@@ -133,10 +133,6 @@ mainLoop
      , Title m
      , SceneManager m
      )
-     --, Play m
-     --, Pause m
-     --, Death m
-     --, GameOver m
   => m ()
 mainLoop = do
   updateInput

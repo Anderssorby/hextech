@@ -7,7 +7,12 @@ import           Foreign.C.Types
 import           SDL.Vect
 import           Control.Monad.Reader
 
-import           HexTech.Config
+import           HexTech.Config                 ( Config(..) )
+import           HexTech.Resource               ( toDigit
+                                                , toDigitReverse
+                                                , Digit(..)
+                                                , Resources(..)
+                                                )
 import           HexTech.Engine.Types
 import           HexTech.Wrapper.SDLRenderer    ( SDLRenderer(..) )
 
@@ -18,7 +23,6 @@ class Monad m => Renderer m where
   drawPressSpaceText :: (Int, Int) -> m ()
   drawPressEscapeText :: (Int, Int) -> m ()
   drawTitleText :: (Int, Int) -> m ()
-  --drawNumber :: Number -> (Int, Int) -> m ()
   drawControlsText :: (Int, Int) -> m ()
 
 clearScreen' :: (SDLRenderer m, MonadReader Config m) => m ()
@@ -170,6 +174,20 @@ rectFromClip Animate.SpriteClip { scX, scY, scW, scH } = SDL.Rectangle
   (V2 (num scW) (num scH))
   where num = fromIntegral
 
+drawDigit
+  :: (SDLRenderer m, Renderer m, MonadReader Config m)
+  => Digit
+  -> (Int, Int)
+  -> m ()
+drawDigit d = drawTextureSprite (flip rDigitSprites d . cResources)
+
+drawDigits
+  :: (SDLRenderer m, Renderer m, MonadReader Config m)
+  => Integer
+  -> (Int, Int)
+  -> m ()
+drawDigits int (x, y) = mapM_ (\(i, d) -> drawDigit d (x - i * 16, y))
+                              (zip [0 ..] (toDigitReverse int))
 --stepHorizontalDistance :: Distance -> Distance -> Distance
 --stepHorizontalDistance dist speed = if dist' <= -1280
 --  then dist' + 1280

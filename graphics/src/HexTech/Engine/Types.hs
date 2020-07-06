@@ -15,6 +15,9 @@ frameDeltaMilliseconds = 16
 newtype Seconds = Seconds Float
   deriving (Show, Eq, Num, ToJSON, FromJSON, Fractional, Ord)
 
+secondsToInteger :: Seconds -> Integer
+secondsToInteger (Seconds f) = floor f
+
 newtype Stocks = Stocks Int
   deriving (Show, Eq, Num, Integral, Real, Ord, Enum)
 

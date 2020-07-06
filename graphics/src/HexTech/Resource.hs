@@ -10,16 +10,10 @@ import           Data.StateVar                  ( ($=) )
 import           SDL.Vect
 import qualified SDL.Raw.Video                 as Raw
 import qualified SDL.Internal.Numbered         as Numbered
-import           Data.Text
+import           Data.Text                      ( Text )
+import           Data.Text.Conversions          ( toText )
 
-import           HexTech.Engine.Types
---import           DinoRush.Engine.Dino
---import           DinoRush.Engine.Font
---import           DinoRush.Engine.Bird
---import           DinoRush.Engine.Lava
---import           DinoRush.Engine.Mountain
---import           DinoRush.Engine.River
---import           DinoRush.Engine.Rock
+import           HexTech.Engine.Types           ( )
 
 data Resources = Resources
   { --rMountainSprites :: Animate.SpriteSheet MountainKey SDL.Texture Seconds
@@ -48,7 +42,7 @@ data Resources = Resources
   , rGameOverSprite :: SDL.Texture
   , rHiscoreSprite :: SDL.Texture
   , rTitleSprite :: SDL.Texture
-  --, rNumberSprites :: Number -> SDL.Texture
+  , rDigitSprites :: Digit -> SDL.Texture
   , rControlsSprite :: SDL.Texture
   }
 
@@ -112,30 +106,30 @@ loadResources renderer = do
                                            (V4 0xff 0xff 0xff 0xff)
                                            (V4 0x11 0x08 0x1e 0x2a)
                                            " Hex Tech "
-  let drawFont :: Text -> IO SDL.Texture
-      drawFont text =
-        toTexture =<< Font.solid smallFont (V4 255 255 255 255) text
-  --num0 <- drawFont 0
-  --num1 <- drawFont 1
-  --num2 <- drawFont 2
-  --num3 <- drawFont 3
-  --num4 <- drawFont 4
-  --num5 <- drawFont 5
-  --num6 <- drawFont 6
-  --num7 <- drawFont 7
-  --num8 <- drawFont 8
-  --num9 <- drawFont 9
-  --let numberSprites = \n -> case n of
-  --      Number'0 -> num0
-  --      Number'1 -> num1
-  --      Number'2 -> num2
-  --      Number'3 -> num3
-  --      Number'4 -> num4
-  --      Number'5 -> num5
-  --      Number'6 -> num6
-  --      Number'7 -> num7
-  --      Number'8 -> num8
-  --      Number'9 -> num9
+  let drawDigit :: Int -> IO SDL.Texture
+      drawDigit d = toTexture
+        =<< Font.solid smallFont (V4 255 255 255 255) (toText $ show d)
+  num0 <- drawDigit 0
+  num1 <- drawDigit 1
+  num2 <- drawDigit 2
+  num3 <- drawDigit 3
+  num4 <- drawDigit 4
+  num5 <- drawDigit 5
+  num6 <- drawDigit 6
+  num7 <- drawDigit 7
+  num8 <- drawDigit 8
+  num9 <- drawDigit 9
+  let digitSprites = \n -> case n of
+        Digit'0 -> num0
+        Digit'1 -> num1
+        Digit'2 -> num2
+        Digit'3 -> num3
+        Digit'4 -> num4
+        Digit'5 -> num5
+        Digit'6 -> num6
+        Digit'7 -> num7
+        Digit'8 -> num8
+        Digit'9 -> num9
   --dinoSprites <-
   --  Animate.readSpriteSheetJSON loadTexture "resource/dino.json" :: IO
   --    (Animate.SpriteSheet DinoKey SDL.Texture Seconds)
@@ -160,7 +154,7 @@ loadResources renderer = do
                    , rGameOverSprite = gameOverSprite
                    , rHiscoreSprite  = hiscoreSprite
                    , rTitleSprite    = titleSprite
-                   --, rNumberSprites  = numberSprites
+                   , rDigitSprites   = digitSprites
                    , rControlsSprite = controlsSprite
                    }
  where
@@ -198,3 +192,38 @@ freeResources r = do
   --Mixer.free (rRecoverSfx r)
   --Mixer.free (rStockSfx r)
   --Mixer.free (rDeathSfx r)
+
+data Digit
+  = Digit'0
+  | Digit'1
+  | Digit'2
+  | Digit'3
+  | Digit'4
+  | Digit'5
+  | Digit'6
+  | Digit'7
+  | Digit'8
+  | Digit'9
+  deriving (Show, Eq, Enum, Bounded)
+
+digitToInt :: Digit -> Int
+digitToInt = fromEnum
+
+toDigit :: Integer -> [Digit]
+toDigit i = (if next == 0 then [] else toDigit next) ++ (single (i `mod` 10))
+ where
+  next = i `div` 10
+  single 0 = [Digit'0]
+  single 1 = [Digit'1]
+  single 2 = [Digit'2]
+  single 3 = [Digit'3]
+  single 4 = [Digit'4]
+  single 5 = [Digit'5]
+  single 6 = [Digit'6]
+  single 7 = [Digit'7]
+  single 8 = [Digit'8]
+  single 9 = [Digit'9]
+  single _ = []
+
+toDigitReverse :: Integer -> [Digit]
+toDigitReverse = reverse . toDigit

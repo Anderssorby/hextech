@@ -20,6 +20,7 @@ import           HexTech.Engine.Types           ( Logger(..)
                                                 , Seconds
                                                 , Clock(..)
                                                 , frameDeltaSeconds
+                                                , secondsToInteger
                                                 )
 import           HexTech.Scene                  ( SceneManager(..)
                                                 , Scene(..)
@@ -28,6 +29,7 @@ import           HexTech.Resource               ( Resources(..) )
 import           HexTech.Engine.Renderer        ( Renderer(..)
                                                 , drawBlackOverlay
                                                 , drawTextureSprite
+                                                , drawDigits
                                                 )
 import           HexTech.Camera                 ( CameraControl(..)
                                                 , lerpCamera
@@ -58,14 +60,7 @@ data PlayVars = PlayVars
 makeClassy_ ''PlayVars
 
 initPlayVars :: PlayVars
-initPlayVars =
-  PlayVars {
-  --pvScore             = 0
-  --, pvStocks            = 3
-             pvSeconds = 0
-  --, pvSpeed             = 1
-  --, pvShowDino          = True
-                          , pvZoom = 1 }
+initPlayVars = PlayVars { pvSeconds = 0, pvZoom = 1 }
   --, pvDinoState         = DinoState DinoAction'Move Nothing Nothing Nothing
   --, pvDinoPos           = Animate.initPosition DinoKey'Move
   --, pvMountainPos       = Animate.initPosition MountainKey'Idle
@@ -76,23 +71,21 @@ initPlayVars =
   --, pvRiverScroll       = 0
   --, pvObstacles         = []
   --, pvUpcomingObstacles = upcomingObstacles
---class Monad m => Play m where
---  playStep :: m ()
 
 playStep
   :: ( HasPlayVars s
-     --, HasCommonVars s
      , MonadState s m
      , Logger m
      , CameraControl m
      , Clock m
      , Renderer m
+     , SDLRenderer m
      , Audio m
      --, AudioSfx m
      , HasInput m
      , SceneManager m
+     , MonadReader Config m
      )
-     --, HUD m
   => m ()
 playStep = do
   input <- getInput
@@ -102,7 +95,6 @@ playStep = do
 
 updatePlay
   :: ( HasPlayVars s
-     --, HasCommonVars s
      , MonadState s m
      , Logger m
      , Clock m
@@ -129,7 +121,15 @@ updatePlay = do
   isDead <- getDead
   when isDead (toScene Scene'Title)
 
-drawPlay :: (HasPlayVars s, MonadState s m, Renderer m, CameraControl m) => m ()
+drawPlay
+  :: ( HasPlayVars s
+     , MonadState s m
+     , Renderer m
+     , CameraControl m
+     , SDLRenderer m
+     , MonadReader Config m
+     )
+  => m ()
 drawPlay = do
   --dinoAnimations     <- getDinoAnimations
   --mountainAnimations <- getMountainAnimations
@@ -152,6 +152,7 @@ drawPlay = do
   --  $ applyQuakeToRiver quake (truncate $ pvRiverScroll pv, riverY)
   disableZoom
   drawControlsText (200, 470)
+  drawDigits (secondsToInteger $ pvSeconds pv) (50, 50)
   --drawStocks pv dinoAnimations
   --drawHiscore
   --drawScore
