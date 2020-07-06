@@ -37,6 +37,10 @@ type DrawSprite key m = Animate.SpriteClip key -> (Int, Int) -> m ()
 class Monad m => Clock m where
   delayMilliseconds :: Int -> m ()
 
+showText :: Show a => a -> Text
+showText = pack . show
 
 class Monad m => Logger m where
   logText :: Text -> m ()
+  logShow :: Show a => a -> m ()
+  logShow = logText . showText

@@ -1,23 +1,33 @@
 module HexTech.Scene.Play where
 
 import qualified Animate
-import           Control.Monad                  ( when )
+import           Control.Monad                  ( when
+                                                , mapM_
+                                                )
 import           Control.Lens            hiding ( zoom )
 import           Control.Monad.State            ( MonadState(..)
                                                 , modify
                                                 , gets
                                                 )
-import           Control.Monad.Reader
+import           Control.Monad.Reader           ( MonadReader )
+import qualified Data.Text.IO                  as T
 import           Data.Foldable                  ( forM_ )
 import           KeyState
 
 import           HexTech.Input                  ( HasInput(..)
-                                                , iSpace
+                                                , Input(..)
                                                 )
 import           HexTech.Config                 ( Config(..) )
+import           HexTech.State                  ( Vars(..)
+                                                , HasSettings(..)
+                                                , Settings(..)
+                                                , modifySettings
+                                                , HasPlayVars(..)
+                                                , PlayVars(..)
+                                                )
+import qualified HexTech.Engine.Audio          as Audio
 import           HexTech.Engine.Audio           ( Audio(..) )
 import           HexTech.Engine.Types           ( Logger(..)
-                                                , Seconds
                                                 , Clock(..)
                                                 , frameDeltaSeconds
                                                 , secondsToInteger
@@ -30,50 +40,38 @@ import           HexTech.Engine.Renderer        ( Renderer(..)
                                                 , drawBlackOverlay
                                                 , drawTextureSprite
                                                 , drawDigits
+                                                , drawLines
                                                 )
 import           HexTech.Camera                 ( CameraControl(..)
                                                 , lerpCamera
                                                 , initCamera
                                                 )
 import           HexTech.Wrapper.SDLRenderer    ( SDLRenderer(..) )
+import           HexTech.Game                   ( Game(..)
+                                                , HasGame(..)
+                                                )
+import           HexTech.Grid                   ( Grid )
+import           HexTech.Graphics               ( gridToPixels )
 
-data PlayVars = PlayVars
-  {
-  --pvScore :: Score
-  --, pvStocks :: Stocks
-  --, pvSpeed :: Percent
-    pvSeconds :: Seconds
-  , pvZoom :: Float
-  --, pvShowDino :: Bool
-  --, pvDinoPos :: Animate.Position DinoKey Seconds
-  --, pvMountainPos :: Animate.Position MountainKey Seconds
-  --, pvRiverPos :: Animate.Position RiverKey Seconds
-  --, pvDinoState :: DinoState
-  --, pvMountainScroll :: Distance
-  --, pvJungleScroll :: Distance
-  --, pvGroundScroll :: Distance
-  --, pvRiverScroll :: Distance
-  --, pvObstacles :: [ObstacleState]
-  --, pvUpcomingObstacles :: [(Int, ObstacleTag)]
-  } deriving (Show, Eq)
 
-makeClassy_ ''PlayVars
 
-initPlayVars :: PlayVars
-initPlayVars = PlayVars { pvSeconds = 0, pvZoom = 1 }
-  --, pvDinoState         = DinoState DinoAction'Move Nothing Nothing Nothing
-  --, pvDinoPos           = Animate.initPosition DinoKey'Move
-  --, pvMountainPos       = Animate.initPosition MountainKey'Idle
-  --, pvRiverPos          = Animate.initPosition RiverKey'Idle
-  --, pvMountainScroll    = 0
-  --, pvJungleScroll      = 0
-  --, pvGroundScroll      = 0
-  --, pvRiverScroll       = 0
-  --, pvObstacles         = []
-  --, pvUpcomingObstacles = upcomingObstacles
+
+playTransition
+  :: (HasPlayVars s, HasSettings s, MonadState s m, Audio m, Logger m) => m ()
+playTransition = do
+  --PlayVars { pvUpcomingObstacles } <- gets (view playVars)
+  --modify $ playVars .~ (initPlayVars pvUpcomingObstacles)
+  updateGameMusic
+
+updateGameMusic :: (HasSettings s, MonadState s m, Audio m, Logger m) => m ()
+updateGameMusic = do
+  muted <- gets $ view (settings . sMuted)
+  return ()
 
 playStep
   :: ( HasPlayVars s
+     , HasGame s
+     , HasSettings s
      , MonadState s m
      , Logger m
      , CameraControl m
@@ -91,16 +89,20 @@ playStep = do
   input <- getInput
   when (ksStatus (iSpace input) == KeyStatus'Pressed) (toScene Scene'Pause)
   updatePlay
+  updateGameMusic
   drawPlay
 
 updatePlay
   :: ( HasPlayVars s
+     , HasSettings s
+     , HasGame s
      , MonadState s m
      , Logger m
      , Clock m
      , CameraControl m
      , Renderer m
      , HasInput m
+     , Audio m
      --, AudioSfx m
      , SceneManager m
      )
@@ -115,6 +117,7 @@ updatePlay = do
   updateZoom
   --updateDino da'
   updateCamera
+  updateMuted
   --updateScrolling
   --updateStocks collision
   --updateHiscore
@@ -122,20 +125,15 @@ updatePlay = do
   when isDead (toScene Scene'Title)
 
 drawPlay
-  :: ( HasPlayVars s
-     , MonadState s m
-     , Renderer m
-     , CameraControl m
-     , SDLRenderer m
-     , MonadReader Config m
-     )
+  :: (HasPlayVars s, HasGame s, MonadState s m, Renderer m, CameraControl m)
   => m ()
 drawPlay = do
   --dinoAnimations     <- getDinoAnimations
   --mountainAnimations <- getMountainAnimations
   --riverAnimations    <- getRiverAnimations
   --quake              <- gets (cvQuake . view commonVars)
-  pv <- gets (view playVars)
+  pv   <- gets (view playVars)
+  grid <- gets $ view (game . gameGrid)
   --let dinoLoc = Animate.currentLocation dinoAnimations (pvDinoPos pv)
   --let mountainLoc =
   --      Animate.currentLocation mountainAnimations (pvMountainPos pv)
@@ -151,7 +149,8 @@ drawPlay = do
   --drawRiver riverLoc
   --  $ applyQuakeToRiver quake (truncate $ pvRiverScroll pv, riverY)
   disableZoom
-  drawControlsText (200, 470)
+  drawGrid grid (50, 50)
+  drawControlsText (50, 470)
   drawDigits (secondsToInteger $ pvSeconds pv) (50, 50)
   --drawStocks pv dinoAnimations
   --drawHiscore
@@ -164,6 +163,12 @@ drawPlay = do
  --           dinoAnimations
  --           (Animate.initPosition DinoKey'Kick)
  --     drawDino idleLoc (20 + 48 * (stock - 1), 32)
+
+drawGrid :: (Renderer m, MonadReader Config m) => Grid -> (Int, Int) -> m ()
+drawGrid grid point = do
+  let points = gridToPixels grid point
+  mapM_ drawLines points
+
 
 --drawObstacles :: Renderer m => Quake -> [ObstacleState] -> m ()
 --drawObstacles quake obstacles = do
@@ -227,7 +232,7 @@ updateZoom = modifyPlayVars $ \pv -> pv { pvZoom = pvZoom pv }
 
 updateCamera :: (MonadState s m, HasPlayVars s, CameraControl m) => m ()
 updateCamera = do
-  zoom <- gets (pvZoom . view playVars)
+  --zoom <- gets (pvZoom . view playVars)
   --let cam = lerpCamera ((1 - zoom) ** (1.8 :: Float)) duckCamera initCamera
   --adjustCamera cam
   return ()
@@ -321,39 +326,42 @@ updateCamera = do
 --  modify $ commonVars %~ \cv -> cv { cvHiscore = max (cvHiscore cv) score }
 --
 getDead :: (MonadState s m, HasPlayVars s) => m Bool
-getDead = (>= 1000) <$> gets (pvSeconds . view playVars)
+getDead = (>= 100) <$> gets (pvSeconds . view playVars)
 
+updateMuted
+  :: (HasSettings s, MonadState s m, HasInput m, Logger m, Audio m) => m ()
+updateMuted = do
+  input <- getInput
+  when (ksStatus (iMute input) == KeyStatus'Pressed) $ do
+    logShow input
+    sett <- gets (view settings)
+    logShow sett
+    modifySettings (\s -> sMuted .~ (not $ s ^. sMuted) $ s)
+    Audio.toggleMusic
 
 pauseStep
-  :: ( HasPlayVars s
-     , MonadState s m
+  :: ( MonadState Vars m
      , SceneManager m
      , HasInput m
      , Renderer m
-     , SDLRenderer m
      , CameraControl m
-     , MonadReader Config m
-     , MonadIO m
+     , Logger m
+     , Audio m
      )
   => m ()
 pauseStep = do
   input <- getInput
   drawPlay
   drawPause
+  updateMuted
+  updateGameMusic
   when (ksStatus (iSpace input) == KeyStatus'Pressed) (toScene Scene'Play)
 
 drawPauseText
   :: (SDLRenderer m, Renderer m, MonadReader Config m) => (Int, Int) -> m ()
 drawPauseText = drawTextureSprite (rPauseSprite . cResources)
 
-drawPause
-  :: ( MonadReader Config m
-     , SDLRenderer m
-     , Renderer m
-     , CameraControl m
-     , MonadIO m
-     )
-  => m ()
+drawPause :: (Renderer m, CameraControl m, MonadState s m, HasGame s) => m ()
 drawPause = do
   drawBlackOverlay 0.8
   disableZoom

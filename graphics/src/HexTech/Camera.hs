@@ -25,6 +25,8 @@ data Camera = Camera
   , camZoom :: V2 Float
   } deriving (Show, Eq)
 
+--makeClassy_ ''Camera
+
 class Monad m => CameraControl m where
   adjustCamera :: Camera -> m ()
   disableZoom :: m ()

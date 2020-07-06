@@ -3,8 +3,8 @@
 {-# LANGUAGE DeriveTraversable #-}
 
 module HexTech.Graphics
-  ( CameraControl
-  , makeWindow
+  ( makeWindow
+  , gridToPixels
   )
 where
 
@@ -55,13 +55,13 @@ data Direction
 data Color = White | Red | Blue | Green | Yellow
 
 type Point t = (t, t)
-
-data Camera = Camera
-
-class Monad m => CameraControl m where
-  adjustCamera :: Camera -> m ()
-  disableZoom :: m ()
-  enableZoom :: m ()
+--
+--data Camera = Camera
+--
+--class Monad m => CameraControl m where
+  --adjustCamera :: Camera -> m ()
+  --disableZoom :: m ()
+  --enableZoom :: m ()
 
 data Display
     = Playing Game.Game
@@ -214,8 +214,8 @@ makeWindow = withSDL $ withWindow "HexTech" (1000, 1000) $ \w ->
     whileM $ drawLoop r
 
 
-gridToPixels :: Grid -> [Vector (SDL.Point SDL.V2 CInt)]
-gridToPixels grid = do
+gridToPixels :: Grid -> (Int, Int) -> [Vector (SDL.Point SDL.V2 CInt)]
+gridToPixels grid (gx, gy) = do
   let tiles = gridTiles grid
   row  <- tiles
   tile <- row
@@ -236,7 +236,7 @@ gridToPixels grid = do
       * lineWidth
       ) :: Int
 
-  return $ makeHexagon (px, py) $ round size
+  return $ makeHexagon (gx + px, gy + py) $ round size
 
 makeGrid :: [Vector (SDL.Point SDL.V2 CInt)]
 makeGrid = map tile coords

@@ -4,8 +4,13 @@ import qualified Animate
 import qualified SDL
 import           Data.StateVar                  ( ($=) )
 import           Foreign.C.Types
-import           SDL.Vect
+import           SDL.Vect                       ( V2(..)
+                                                , V4(..)
+                                                , (*^)
+                                                )
 import           Control.Monad.Reader
+import qualified Data.Vector.Storable          as Vector
+import           Data.Vector.Storable           ( Vector )
 
 import           HexTech.Config                 ( Config(..) )
 import           HexTech.Resource               ( toDigit
@@ -16,7 +21,12 @@ import           HexTech.Resource               ( toDigit
 import           HexTech.Engine.Types
 import           HexTech.Wrapper.SDLRenderer    ( SDLRenderer(..) )
 
-class Monad m => Renderer m where
+class (Monad m
+      , SDLRenderer m
+      , MonadReader Config m
+      , MonadIO m
+      ) => Renderer m where
+
   clearScreen :: m ()
   drawScreen :: m ()
   drawGameOverText :: (Int, Int) -> m ()
@@ -44,6 +54,17 @@ groundY = 16 * 28
 riverY = 16 * 36
 
 --
+mkPoint :: (Integral a, Integral b) => a -> a -> SDL.Point SDL.V2 b
+mkPoint x y = SDL.P $ SDL.V2 (fromIntegral x) (fromIntegral y)
+
+drawLine :: (MonadIO m) => SDL.Renderer -> (Int, Int) -> (Int, Int) -> m ()
+drawLine r (ox, oy) (tx, ty) = SDL.drawLine r (mkPoint ox oy) (mkPoint tx ty)
+
+drawLines
+  :: (MonadIO m, MonadReader Config m) => Vector (SDL.Point SDL.V2 CInt) -> m ()
+drawLines points = do
+  renderer <- asks cRenderer
+  SDL.drawLines renderer points
 
 drawTextureSprite
   :: (SDLRenderer m, MonadReader Config m)

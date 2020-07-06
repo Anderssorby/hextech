@@ -4,11 +4,8 @@ import qualified SDL
 import           Control.Monad.State
 import           KeyState
 
---import           HexTech.Engine.Input
 import           HexTech.Wrapper.SDLInput
---import           HexTech.State
 
-import           KeyState
 
 data Input = Input
   { iSpace :: KeyState Int
@@ -16,10 +13,17 @@ data Input = Input
   , iDown :: KeyState Int
   , iEscape :: KeyState Int
   , iQuit :: Bool
+  , iMute :: KeyState Int
   } deriving (Show, Eq)
 
 initInput :: Input
-initInput = Input initKeyState initKeyState initKeyState initKeyState False
+initInput = Input { iSpace  = initKeyState
+                  , iUp     = initKeyState
+                  , iDown   = initKeyState
+                  , iEscape = initKeyState
+                  , iQuit   = False
+                  , iMute   = initKeyState
+                  }
 
 {-| This class describes type implementations that can handle user input and record it in a Monad
 -}
@@ -36,11 +40,12 @@ updateInput' = do
   setInput (stepControl events input)
 
 stepControl :: [SDL.EventPayload] -> Input -> Input
-stepControl events Input { iSpace, iUp, iDown, iEscape } = Input
+stepControl events Input { iSpace, iUp, iDown, iEscape, iMute } = Input
   { iSpace  = next 1 [SDL.KeycodeSpace] iSpace
   , iUp     = next 1 [SDL.KeycodeUp, SDL.KeycodeW] iUp
   , iDown   = next 1 [SDL.KeycodeDown, SDL.KeycodeS] iDown
-  , iEscape = next 1 [SDL.KeycodeEscape] iEscape
+  , iEscape = next 1 [SDL.KeycodeEscape, SDL.KeycodeQ] iEscape
+  , iMute   = next 1 [SDL.KeycodeM] iMute
   , iQuit   = elem SDL.QuitEvent events
   }
  where

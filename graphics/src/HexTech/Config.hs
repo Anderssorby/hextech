@@ -1,12 +1,10 @@
 module HexTech.Config
   ( Config(..)
-  , Resources(..)
   )
 where
 
 import qualified SDL
-
-import           HexTech.Resource
+import           HexTech.Resource               ( Resources )
 
 data Config = Config
   { cWindow :: SDL.Window

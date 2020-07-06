@@ -13,13 +13,10 @@ import           Control.Monad.Reader
 import qualified SDL
 import qualified SDL.Mixer                     as Mixer
 import qualified SDL.Font                      as Font
-import           Data.Text
 import qualified Data.Text.IO                  as T
 import           KeyState
 
 
-import           HexTech.Graphics               ( makeWindow )
-import           HexTech.Game                   ( Game(..) )
 import           HexTech.Engine.Types           ( Clock(..)
                                                 , Logger(..)
                                                 , frameDeltaMilliseconds
@@ -51,15 +48,12 @@ import           HexTech.State                  ( Vars(..)
 import           HexTech.Scene                  ( Scene(..)
                                                 , SceneManager(..)
                                                 )
-import           HexTech.Scene.Title            ( Title(..)
-                                                , HasTitleVars
+import           HexTech.Scene.Title            ( HasTitleVars
                                                 , initTitleVars
                                                 , titleVars
-                                                , titleStep'
+                                                , titleStep
                                                 )
-import           HexTech.Scene.Play             ( HasPlayVars
-                                                , initPlayVars
-                                                , playVars
+import           HexTech.Scene.Play             ( playTransition
                                                 , playStep
                                                 , pauseStep
                                                 )
@@ -130,7 +124,6 @@ mainLoop
      , SDLRenderer m
      , MonadIO m
      , HasInput m
-     , Title m
      , SceneManager m
      )
   => m ()
@@ -188,13 +181,6 @@ titleTransition :: (HasTitleVars a, MonadState a m, CameraControl m) => m ()
 titleTransition = do
   adjustCamera initCamera
   modify $ titleVars .~ initTitleVars
-
-
-playTransition :: (HasPlayVars a, MonadState a m, Audio m) => m ()
-playTransition = do
-  --PlayVars { pvUpcomingObstacles } <- gets (view playVars)
-  --modify $ playVars .~ (initPlayVars pvUpcomingObstacles)
-  playGameMusic
 
 --deathTransition :: (Audio m) => m ()
 --deathTransition = do
@@ -259,30 +245,8 @@ instance SDLInput HexTech where
 instance Renderer HexTech where
   clearScreen         = clearScreen'
   drawScreen          = drawScreen'
-  --getDinoAnimations     = getSpriteAnimations (rDinoSprites . cResources)
-  --getLavaAnimations     = getSpriteAnimations (rLavaSprites . cResources)
-  --getRockAnimations     = getSpriteAnimations (rRockSprites . cResources)
-  --getBirdAnimations     = getSpriteAnimations (rBirdSprites . cResources)
-  --getMountainAnimations = getSpriteAnimations (rMountainSprites . cResources)
-  --getRiverAnimations    = getSpriteAnimations (rRiverSprites . cResources)
-  --drawDino              = drawSprite (rDinoSprites . cResources)
-  --drawLava              = drawSprite (rLavaSprites . cResources)
-  --drawRock              = drawSprite (rRockSprites . cResources)
-  --drawBird              = drawSprite (rBirdSprites . cResources)
-  --drawMountain = drawHorizontalScrollSprite (rMountainSprites . cResources) 16
-  --drawJungle = drawHorizontalScrollImage (rJungleSprites . cResources) 8
-  --drawGround = drawHorizontalScrollImage (rGroundSprites . cResources) 2
-  --drawRiver = drawHorizontalScrollSprite (rRiverSprites . cResources) 4
-  --drawBlackOverlay      = drawBlackOverlay'
-  --drawHiscoreText       = drawTextureSprite (rHiscoreSprite . cResources)
-  --drawPauseText       = drawTextureSprite (rPauseSprite . cResources)
   drawGameOverText    = drawTextureSprite (rGameOverSprite . cResources)
   drawPressSpaceText  = drawTextureSprite (rSpaceSprite . cResources)
   drawPressEscapeText = drawTextureSprite (rEscapeSprite . cResources)
   drawTitleText       = drawTextureSprite (rTitleSprite . cResources)
-  --drawNumber n = drawTextureSprite (flip rNumberSprites n . cResources)
   drawControlsText    = drawTextureSprite (rControlsSprite . cResources)
-
-
-instance Title HexTech where
-  titleStep = titleStep'

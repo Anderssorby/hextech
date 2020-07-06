@@ -42,22 +42,16 @@ titleShowPressSpace p = sin p > 0.5
 titleShowPressEscape :: Float -> Bool
 titleShowPressEscape p = sin p < -0.5
 
-class Monad m => Title m where
-  titleStep :: m ()
-
-titleStep'
+titleStep
   :: ( HasTitleVars s
-     --, HasCommonVars s
      , MonadReader Config m
      , MonadState s m
      , Renderer m
      , HasInput m
      , SceneManager m
      )
-     --, HUD m
-     --, AudioSfx m
   => m ()
-titleStep' = do
+titleStep = do
   input <- getInput
   when (ksStatus (iSpace input) == KeyStatus'Pressed) (toScene Scene'Play)
   updateTitle

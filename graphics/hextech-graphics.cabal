@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 05878fef03ae4c290514901e26da96333b29d197aab683eede64e613b2d2c18d
+-- hash: f70e4e98ee2bcf8b5fe56889b5ea97c0271bd4bd7e6b967a2ebbbb4f7f7a06a4
 
 name:           hextech-graphics
 version:        0.1.0
@@ -12,7 +12,6 @@ build-type:     Simple
 
 library
   exposed-modules:
-      Common
       HexTech
       HexTech.Camera
       HexTech.Config
@@ -20,7 +19,6 @@ library
       HexTech.Engine.Common
       HexTech.Engine.Renderer
       HexTech.Engine.Types
-      HexTech.Engine.Vars
       HexTech.Game
       HexTech.Graphics
       HexTech.Grid
@@ -32,6 +30,7 @@ library
       HexTech.State
       HexTech.Wrapper.SDLInput
       HexTech.Wrapper.SDLRenderer
+      Main
   other-modules:
       Paths_hextech_graphics
   hs-source-dirs:
@@ -70,16 +69,15 @@ library
   default-language: Haskell2010
 
 executable hextech-graphics
-  main-is: HexTech.hs
+  main-is: Main.hs
   other-modules:
-      Common
+      HexTech
       HexTech.Camera
       HexTech.Config
       HexTech.Engine.Audio
       HexTech.Engine.Common
       HexTech.Engine.Renderer
       HexTech.Engine.Types
-      HexTech.Engine.Vars
       HexTech.Game
       HexTech.Graphics
       HexTech.Grid

@@ -8,11 +8,10 @@ import           Control.Exception.Safe         ( MonadThrow
                                                 , catch
                                                 )
 
-import           HexTech.Config                 ( Config(..)
-                                                , Resources(..)
-                                                )
+import           HexTech.Resource               ( Resources(..) )
+import           HexTech.Config                 ( Config(..) )
 
-class Monad m => Audio m where
+class (Monad m, MonadIO m) => Audio m where
   playGameMusic :: m ()
   stopGameMusic :: m ()
   --playJumpSfx :: m ()
@@ -32,6 +31,23 @@ class Monad m => Audio m where
 playGameMusic' :: (MonadReader Config m, MonadIO m) => m ()
 playGameMusic' =
   asks (rGameMusic . cResources) >>= Mixer.playMusic Mixer.Forever
+
+toggleMusic :: MonadIO m => m ()
+toggleMusic = do
+  paused <- pausedMusic
+  if paused then resumeMusic else pauseMusic
+
+resumeMusic :: MonadIO m => m ()
+resumeMusic = Mixer.resumeMusic
+
+pauseMusic :: MonadIO m => m ()
+pauseMusic = Mixer.pauseMusic
+
+playingMusic :: MonadIO m => m Bool
+playingMusic = Mixer.playingMusic
+
+pausedMusic :: MonadIO m => m Bool
+pausedMusic = Mixer.pausedMusic
 
 stopGameMusic' :: MonadIO m => m ()
 stopGameMusic' = Mixer.haltMusic

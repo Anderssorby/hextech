@@ -51,7 +51,7 @@ library:
 # Runnable executable for our application
 executables:
   hextech-graphics:
-    main: HexTech.hs
+    main: Main.hs
     source-dirs: src
     ghc-options:
     - -threaded

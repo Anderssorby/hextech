@@ -22,10 +22,6 @@ import           HexTech.Scene.Title            ( TitleVars
                                                 , HasTitleVars(..)
                                                 , initTitleVars
                                                 )
-import           HexTech.Scene.Play             ( PlayVars(..)
-                                                , initPlayVars
-                                                , HasPlayVars(..)
-                                                )
 import           HexTech.Camera                 ( Camera(..)
                                                 , initCamera
                                                 , moveCamera
@@ -33,6 +29,57 @@ import           HexTech.Camera                 ( Camera(..)
 import           HexTech.Input                  ( Input(..)
                                                 , initInput
                                                 )
+import           HexTech.Engine.Types           ( Seconds )
+
+
+data PlayVars = PlayVars
+  {
+  --pvScore :: Score
+  --, pvStocks :: Stocks
+  --, pvSpeed :: Percent
+    pvSeconds :: Seconds
+  , pvZoom :: Float
+  --, pvShowDino :: Bool
+  --, pvDinoPos :: Animate.Position DinoKey Seconds
+  --, pvMountainPos :: Animate.Position MountainKey Seconds
+  --, pvRiverPos :: Animate.Position RiverKey Seconds
+  --, pvDinoState :: DinoState
+  --, pvMountainScroll :: Distance
+  --, pvJungleScroll :: Distance
+  --, pvGroundScroll :: Distance
+  --, pvRiverScroll :: Distance
+  --, pvObstacles :: [ObstacleState]
+  --, pvUpcomingObstacles :: [(Int, ObstacleTag)]
+  } deriving (Show, Eq)
+
+makeClassy_ ''PlayVars
+
+initPlayVars :: PlayVars
+initPlayVars = PlayVars { pvSeconds = 0, pvZoom = 1 }
+  --, pvDinoState         = DinoState DinoAction'Move Nothing Nothing Nothing
+  --, pvDinoPos           = Animate.initPosition DinoKey'Move
+  --, pvMountainPos       = Animate.initPosition MountainKey'Idle
+  --, pvRiverPos          = Animate.initPosition RiverKey'Idle
+  --, pvMountainScroll    = 0
+  --, pvJungleScroll      = 0
+  --, pvGroundScroll      = 0
+  --, pvRiverScroll       = 0
+  --, pvObstacles         = []
+  --, pvUpcomingObstacles = upcomingObstacles
+
+data Settings = Settings
+    { _sMuted :: Bool
+    } deriving (Show, Eq)
+
+
+makeClassy ''Settings
+
+initSettings :: Settings
+initSettings = Settings { _sMuted = False }
+
+modifySettings
+  :: (MonadState s m, HasSettings s) => (Settings -> Settings) -> m ()
+modifySettings f = modify $ settings %~ f
 
 data Vars = Vars
   { vGame :: Game
@@ -43,7 +90,9 @@ data Vars = Vars
   --, vGameOver :: GameOverVars
   , vInput :: Input
   , vCamera :: Camera
+  , vSettings :: Settings
   } deriving (Show, Eq)
+
 
 makeClassy_ ''Vars
 
@@ -55,6 +104,7 @@ initVars = Vars twoPlayersGame
                 initPlayVars
                 initInput
                 initCamera
+                initSettings
 
 
 toScene' :: MonadState Vars m => Scene -> m ()
@@ -62,6 +112,9 @@ toScene' scene = modify (\v -> v { vNextScene = scene })
 
 instance HasGame Vars where
   game = lens vGame (\v s -> v { vGame = s })
+
+instance HasSettings Vars where
+  settings = lens vSettings (\v s -> v { vSettings = s })
 
 --instance HasCommonVars Vars where
 --  commonVars = lens vCommon (\v s -> v { vCommon = s })
