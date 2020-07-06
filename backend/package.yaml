@@ -42,6 +42,16 @@ dependencies:
 - case-insensitive
 - wai
 - foreign-store
+default-extensions:
+- DuplicateRecordFields
+- FlexibleContexts
+- FlexibleInstances
+- GeneralizedNewtypeDeriving
+- LambdaCase
+- NamedFieldPuns
+- ScopedTypeVariables
+- OverloadedStrings
+- TemplateHaskell
 
 # The library contains all of our application code. The executable
 # defined below is just a thin wrapper.
