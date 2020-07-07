@@ -40,6 +40,10 @@ import           HexTech.Engine.Renderer        ( Renderer(..)
                                                 , drawDigits
                                                 , drawLines
                                                 , gridToPixels
+                                                , Color(..)
+                                                , setColor
+                                                , setColorV4
+                                                , getColorV4
                                                 )
 import           HexTech.Camera                 ( CameraControl(..) )
 import           HexTech.Wrapper.SDLRenderer    ( SDLRenderer(..) )
@@ -108,6 +112,8 @@ updatePlay = do
   isDead <- getDead
   when isDead (toScene Scene'Title)
 
+{-| Draw the game play view
+-}
 drawPlay
   :: ( HasPlayVars s
      , HasGame s
@@ -121,20 +127,23 @@ drawPlay = do
   pv   <- gets (view playVars)
   grid <- gets $ view (game . gameGrid)
   disableZoom
-  drawGrid grid (50, 50)
+  drawGrid grid (450, 450)
   drawControlsText (50, 470)
   drawDigits (secondsToInteger $ pvSeconds pv) (50, 50)
   muted <- gets $ view (settings . sMuted)
   let muteSprite | muted     = (rMuted . cResources)
                  | otherwise = (rUnMuted . cResources)
 
-  drawTextureSprite muteSprite (800, 50)
+  drawTextureSprite muteSprite (900, 50)
   enableZoom
 
 drawGrid :: (Renderer m, MonadReader Config m) => Grid -> (Int, Int) -> m ()
 drawGrid grid point = do
   let points = gridToPixels grid point
+  oldColor <- getColorV4
+  setColor Green
   mapM_ drawLines points
+  setColorV4 oldColor
 
 
 modifyPlayVars

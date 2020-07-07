@@ -2,10 +2,14 @@ module HexTech.Wrapper.SDLRenderer where
 
 import qualified SDL
 import           Control.Monad.IO.Class         ( MonadIO(..) )
+import           Control.Monad.Reader           ( MonadReader(..)
+                                                , asks
+                                                )
 import           Foreign.C.Types
 import           SDL.Vect
+import           HexTech.Config                 ( Config(..) )
 
-class Monad m => SDLRenderer m where
+class (Monad m, MonadIO m) => SDLRenderer m where
   presentRenderer :: SDL.Renderer -> m ()
   clearRenderer :: SDL.Renderer -> m ()
   queryTexture :: SDL.Texture -> m SDL.TextureInfo
@@ -21,7 +25,7 @@ clearSurface' :: MonadIO m => SDL.Surface -> m ()
 clearSurface' screen = liftIO $ SDL.surfaceFillRect screen Nothing (V4 0 0 0 0)
 
 drawTexture'
-  :: MonadIO m
+  :: (SDLRenderer m)
   => SDL.Renderer
   -> SDL.Texture
   -> Maybe (SDL.Rectangle CInt)

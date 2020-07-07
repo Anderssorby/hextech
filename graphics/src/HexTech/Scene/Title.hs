@@ -6,7 +6,7 @@ import           Control.Lens
 import           Control.Monad                  ( when )
 import           Control.Monad.Reader           ( MonadReader(..) )
 import           Control.Monad.State            ( MonadState(..)
-                                                --, modify
+                                                , modify
                                                 , gets
                                                 )
 import           KeyState
@@ -84,14 +84,7 @@ updateTitle = do
   --let riverPos' =
   --      Animate.stepPosition riverAnimations riverPos frameDeltaSeconds
   --
-  --modify
-  --  $  titleVars
-  --  %~ (\tv -> tv { tvDinoPos     = dinoPos'
-  --                , tvMountainPos = mountainPos'
-  --                , tvRiverPos    = riverPos'
-  --                , tvFlashing    = tvFlashing tv + 0.025
-  --                }
-       --)
+  modify $ titleVars %~ (\tv -> tv { tvFlashing = tvFlashing tv + 0.025 })
 
 drawTitle
   :: ( HasTitleVars s

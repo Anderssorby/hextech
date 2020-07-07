@@ -35,9 +35,6 @@ dependencies:
 - hlint
 - brittany
 ghc-options: -Wall
-mixins:
-  - base hiding (Prelude)
-  - relude (Relude as Prelude)
 default-extensions:
 - DuplicateRecordFields
 - FlexibleContexts
@@ -52,6 +49,9 @@ default-extensions:
 # defined below is just a thin wrapper.
 library:
   source-dirs: src
+  mixins:
+  - base hiding (Prelude)
+  - relude (Relude as Prelude)
 
 
 # Runnable executable for our application

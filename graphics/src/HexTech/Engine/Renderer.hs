@@ -3,7 +3,9 @@ module HexTech.Engine.Renderer where
 import qualified Animate
 import qualified SDL
 import           Data.StateVar                  ( ($=) )
+import qualified Data.StateVar                 as StateVar
 import           Foreign.C.Types
+import           Data.Word                      ( Word8 )
 import           SDL.Vect                       ( V2(..)
                                                 , V4(..)
                                                 , (*^)
@@ -49,6 +51,29 @@ drawScreen' = do
   renderer <- asks cRenderer
   presentRenderer renderer
 
+data Color = White | Red | Blue | Green | Yellow deriving (Eq, Enum, Show)
+type ColorV4 = SDL.V4 Word8
+
+
+colorV4 :: Color -> SDL.V4 Word8
+colorV4 White  = SDL.V4 maxBound maxBound maxBound maxBound
+colorV4 Red    = SDL.V4 maxBound 0 0 maxBound
+colorV4 Green  = SDL.V4 0 maxBound 0 maxBound
+colorV4 Blue   = SDL.V4 0 0 maxBound maxBound
+colorV4 Yellow = SDL.V4 maxBound maxBound 0 maxBound
+
+getColorV4 :: (Renderer m) => m ColorV4
+getColorV4 = do
+  r <- asks (cRenderer)
+  StateVar.get $ SDL.rendererDrawColor r
+
+setColor :: Renderer m => Color -> m ()
+setColor = setColorV4 . colorV4
+
+setColorV4 :: Renderer m => ColorV4 -> m ()
+setColorV4 c = do
+  r <- asks (cRenderer)
+  SDL.rendererDrawColor r $= c
 --
 
 mountainY, jungleY, groundY, riverY :: Int
@@ -252,6 +277,6 @@ makeHexagon center size = Vector.generate 7 $ pointyHexCorner center size
 pointyHexCorner :: Point Int -> Int -> Int -> SDL.Point SDL.V2 CInt
 pointyHexCorner (x, y) size i = mkPoint px py
  where
-  angleRad = pi / 3.0 * fromIntegral i + pi / 6.0
+  angleRad = pi / 3.0 * fromIntegral i + pi / 6.0 :: Double
   px       = round (fromIntegral x + fromIntegral size * cos (angleRad)) :: CInt
   py       = round (fromIntegral y + fromIntegral size * sin (angleRad)) :: CInt
