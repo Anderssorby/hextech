@@ -3,10 +3,13 @@ module HexTech.Game
   ( twoPlayersGame
   , Action(..)
   , Player(..)
+  , player
   , Game
   , Piece
   , Resource(..)
   , PieceType
+  , movePiece
+  , pieceStrength
   --, runGame
   --, runRound
   , HasGame(..)

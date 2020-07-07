@@ -33,9 +33,12 @@ import           HexTech.Engine.Types           ( Logger(..)
 import           HexTech.Scene                  ( SceneManager(..)
                                                 , Scene(..)
                                                 )
-import           HexTech.Resource               ( Resources(..) )
+import           HexTech.Resource               ( Resources(..)
+                                                , CommanderKey(..)
+                                                )
 import           HexTech.Engine.Renderer        ( Renderer(..)
                                                 , drawBlackOverlay
+                                                , drawCommander
                                                 , drawTextureSprite
                                                 , drawDigits
                                                 , drawLines
@@ -137,13 +140,14 @@ drawPlay = do
   drawTextureSprite muteSprite (900, 50)
   enableZoom
 
-drawGrid :: (Renderer m, MonadReader Config m) => Grid -> (Int, Int) -> m ()
+drawGrid :: (Renderer m) => Grid -> (Int, Int) -> m ()
 drawGrid grid point = do
   let points = gridToPixels grid point
   oldColor <- getColorV4
   setColor Green
   mapM_ drawLines points
   setColorV4 oldColor
+  drawCommander Commander'Idle (300, 300)
 
 
 modifyPlayVars

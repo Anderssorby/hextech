@@ -166,6 +166,8 @@ drawHorizontalScrollSprite ss scale clip (x, y) = do
       dim'
     )
 
+{-| Load sprite animations from Animate
+ -}
 getSpriteAnimations
   :: (MonadReader Config m)
   => (Config -> Animate.SpriteSheet key SDL.Texture Seconds)
@@ -221,7 +223,7 @@ drawBlackOverlay (Percent percent) = do
 
 rectFromClip :: Animate.SpriteClip key -> SDL.Rectangle CInt
 rectFromClip Animate.SpriteClip { scX, scY, scW, scH } = SDL.Rectangle
-  (SDL.P (V2 (num scX) (num scY)))
+  (mkPoint scX scY)
   (V2 (num scW) (num scH))
   where num = fromIntegral
 
@@ -245,9 +247,11 @@ drawDigits int (x, y) = mapM_ (\(i, d) -> drawDigit d (x - i * 16, y))
 --  else dist'
 --  where dist' = dist + speed
 
-drawCommander
-  :: Renderer m => Animate.SpriteClip CommanderKey -> (Int, Int) -> m ()
-drawCommander = drawSprite (rCommanderSprites . cResources)
+drawCommander :: Renderer m => CommanderKey -> (Int, Int) -> m ()
+drawCommander key pos = do
+  animations <- getSpriteAnimations (rCommanderSprites . cResources)
+  let aniLoc = Animate.currentLocation animations (Animate.initPosition key)
+  drawSprite (rCommanderSprites . cResources) aniLoc pos
 
 drawJungle :: Renderer m => (Int, Int) -> m ()
 drawJungle = drawHorizontalScrollImage (rJungleSprites . cResources) 8
