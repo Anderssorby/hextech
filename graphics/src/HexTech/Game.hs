@@ -29,10 +29,10 @@ import qualified Data.Map.Strict               as Map
 import           Data.Map.Strict                ( Map )
 
 
-data PieceType = Leader | Drone | Tower | FastDrone deriving (Show, Eq, Ord)
+data PieceType = Commander | Drone | Tower | FastDrone deriving (Show, Eq, Ord)
 
 pieceStrength :: PieceType -> Int
-pieceStrength Leader    = 3
+pieceStrength Commander = 3
 pieceStrength Drone     = 1
 pieceStrength Tower     = 3
 pieceStrength FastDrone = 1
@@ -57,7 +57,7 @@ data Player = Player
     --, playerResources :: [ResourceType]
     } deriving (Show, Eq, Ord)
 
-makeClassy ''Player
+makeClassy_ ''Player
 
 data Game = Game
       { _gamePlayers :: [Player]
@@ -88,13 +88,14 @@ data Action
     | BuildDrone GridPosition
     | UpgradePiece
     | Attack GridPosition
+    deriving (Show, Eq)
 
 twoPlayersGame :: Game
 twoPlayersGame =
 
   let anders      = Player { playerName = "Anders" }
       antoine     = Player { playerName = "Antoine" }
-      leaderPiece = Piece { pieceType = Leader }
+      leaderPiece = Piece { pieceType = Commander }
       players     = [anders, antoine]
   in  Game
         { _gamePlayers    = players
