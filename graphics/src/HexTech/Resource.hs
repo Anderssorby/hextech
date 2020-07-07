@@ -4,20 +4,34 @@ import qualified SDL
 import qualified SDL.Mixer                     as Mixer
 import qualified SDL.Font                      as Font
 import qualified SDL.Image                     as Image
+import           Data.Text                      ( Text )
 import qualified Animate
 import           Data.StateVar                  ( ($=) )
 import           SDL.Vect
 import qualified SDL.Raw.Video                 as Raw
 import qualified SDL.Internal.Numbered         as Numbered
 
-import           HexTech.Engine.Types           ( showText )
+import           HexTech.Engine.Types           ( showText
+                                                , Seconds
+                                                )
+
+data CommanderKey =
+    Commander'Idle
+    deriving (Show, Eq, Ord, Bounded, Enum)
+
+instance Animate.KeyName CommanderKey where
+  keyName = commander'keyName
+
+commander'keyName :: CommanderKey -> Text
+commander'keyName key = case key of
+  Commander'Idle -> "Idle"
 
 data Resources = Resources
   { --rMountainSprites :: Animate.SpriteSheet MountainKey SDL.Texture Seconds
   --, rRiverSprites :: Animate.SpriteSheet RiverKey SDL.Texture Seconds
    rJungleSprites :: SDL.Texture
   , rGroundSprites :: SDL.Texture
-  --, rDinoSprites :: Animate.SpriteSheet DinoKey SDL.Texture Seconds
+  , rCommanderSprites :: Animate.SpriteSheet CommanderKey SDL.Texture Seconds
   --, rBirdSprites :: Animate.SpriteSheet BirdKey SDL.Texture Seconds
   --, rLavaSprites :: Animate.SpriteSheet LavaKey SDL.Texture Seconds
   --, rRockSprites :: Animate.SpriteSheet RockKey SDL.Texture Seconds
@@ -89,11 +103,14 @@ loadResources renderer = do
   jungle         <- loadTexture "resource/jungle.png" (Just alphaColorDef)
   ground         <- loadTexture "resource/ground.png" (Just alphaColorDef)
   controlsSprite <- loadTexture "resource/controls.png" (Just alphaColorDef)
+  dinoSprites    <-
+    Animate.readSpriteSheetJSON loadTexture "resource/dino.json" :: IO
+      (Animate.SpriteSheet CommanderKey SDL.Texture Seconds)
   --riverSprites   <-
   --  Animate.readSpriteSheetJSON loadTexture "resource/river.json" :: IO
   --    (Animate.SpriteSheet RiverKey SDL.Texture Seconds)
   pauseSprite <- toTexture =<< Font.solid bigFont (V4 255 255 255 255) "PAUSED"
-  spaceSprite    <- toTexture
+  spaceSprite <- toTexture
     =<< Font.solid smallFont (V4 255 255 255 255) "PRESS SPACE"
   escapeSprite <- toTexture
     =<< Font.solid smallFont (V4 255 255 255 255) "PRESS ESCAPE TO QUIT"
@@ -146,19 +163,20 @@ loadResources renderer = do
   Font.free smallFont
   Font.free bigFont
   Font.free titleFont
-  return Resources { rJungleSprites  = jungle
-                   , rGroundSprites  = ground
-                   , rGameMusic      = gameMusic
-                   , rMuted          = muted
-                   , rUnMuted        = unMuted
-                   , rPauseSprite    = pauseSprite
-                   , rSpaceSprite    = spaceSprite
-                   , rEscapeSprite   = escapeSprite
-                   , rGameOverSprite = gameOverSprite
-                   , rHiscoreSprite  = hiscoreSprite
-                   , rTitleSprite    = titleSprite
-                   , rDigitSprites   = digitSprites
-                   , rControlsSprite = controlsSprite
+  return Resources { rJungleSprites    = jungle
+                   , rGroundSprites    = ground
+                   , rCommanderSprites = dinoSprites
+                   , rGameMusic        = gameMusic
+                   , rMuted            = muted
+                   , rUnMuted          = unMuted
+                   , rPauseSprite      = pauseSprite
+                   , rSpaceSprite      = spaceSprite
+                   , rEscapeSprite     = escapeSprite
+                   , rGameOverSprite   = gameOverSprite
+                   , rHiscoreSprite    = hiscoreSprite
+                   , rTitleSprite      = titleSprite
+                   , rDigitSprites     = digitSprites
+                   , rControlsSprite   = controlsSprite
                    }
  where
   toTexture surface = SDL.createTextureFromSurface renderer surface
@@ -168,10 +186,10 @@ loadResources renderer = do
 freeResources :: Resources -> IO ()
 freeResources r = do
   --SDL.destroyTexture $ Animate.ssImage (rMountainSprites r)
-  --SDL.destroyTexture (rJungleSprites r)
-  --SDL.destroyTexture (rGroundSprites r)
+  SDL.destroyTexture (rJungleSprites r)
+  SDL.destroyTexture (rGroundSprites r)
   --SDL.destroyTexture $ Animate.ssImage (rRiverSprites r)
-  --SDL.destroyTexture $ Animate.ssImage (rDinoSprites r)
+  SDL.destroyTexture $ Animate.ssImage (rCommanderSprites r)
   --SDL.destroyTexture $ Animate.ssImage (rBirdSprites r)
   --SDL.destroyTexture $ Animate.ssImage (rLavaSprites r)
   --SDL.destroyTexture $ Animate.ssImage (rRockSprites r)

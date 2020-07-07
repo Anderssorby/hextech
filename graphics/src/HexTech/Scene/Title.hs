@@ -11,7 +11,7 @@ import           Control.Monad.State            ( MonadState(..)
                                                 )
 import           KeyState
 
-import           HexTech.Config
+import           HexTech.Config                 ( Config(..) )
 --import           HexTech.Engine.Types
 --import           HexTech.Engine.Common
 import           HexTech.Engine.Renderer        ( Renderer )
@@ -69,7 +69,6 @@ updateTitle
      --, AudioSfx m
   => m ()
 updateTitle = do
-  return ()
   --dinoAnimations <- getDinoAnimations
   --dinoPos        <- gets (tvDinoPos . view titleVars)
   --let dinoPos' = Animate.stepPosition dinoAnimations dinoPos frameDeltaSeconds

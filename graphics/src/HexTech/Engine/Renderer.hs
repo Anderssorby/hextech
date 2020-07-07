@@ -18,6 +18,7 @@ import           HexTech.Config                 ( Config(..) )
 import           HexTech.Resource               ( toDigitReverse
                                                 , Digit(..)
                                                 , Resources(..)
+                                                , CommanderKey
                                                 )
 import           HexTech.Engine.Types
 import           HexTech.Wrapper.SDLRenderer    ( SDLRenderer(..) )
@@ -113,7 +114,7 @@ drawTextureSprite getTex (x, y) = do
     )
 
 drawSprite
-  :: (SDLRenderer m, MonadReader Config m)
+  :: (Renderer m)
   => (Config -> Animate.SpriteSheet key SDL.Texture Seconds)
   -> Animate.SpriteClip key
   -> (Int, Int)
@@ -130,7 +131,7 @@ drawSprite ss clip (x, y) = do
     )
 
 drawHorizontalScrollSprite
-  :: (MonadReader Config m, SDLRenderer m)
+  :: (Renderer m)
   => (Config -> Animate.SpriteSheet key SDL.Texture Seconds)
   -> Int
   -> Animate.SpriteClip key
@@ -244,6 +245,15 @@ drawDigits int (x, y) = mapM_ (\(i, d) -> drawDigit d (x - i * 16, y))
 --  else dist'
 --  where dist' = dist + speed
 
+drawCommander
+  :: Renderer m => Animate.SpriteClip CommanderKey -> (Int, Int) -> m ()
+drawCommander = drawSprite (rCommanderSprites . cResources)
+
+drawJungle :: Renderer m => (Int, Int) -> m ()
+drawJungle = drawHorizontalScrollImage (rJungleSprites . cResources) 8
+
+drawGround :: Renderer m => (Int, Int) -> m ()
+drawGround = drawHorizontalScrollImage (rGroundSprites . cResources) 2
 
 gridToPixels :: Grid -> (Int, Int) -> [Vector (SDL.Point SDL.V2 CInt)]
 gridToPixels grid (gx, gy) = do
@@ -269,12 +279,12 @@ gridToPixels grid (gx, gy) = do
 
   return $ makeHexagon (gx + px, gy + py) $ round size
 
-type Point t = (t, t)
+type Point = (Int, Int)
 
-makeHexagon :: Point Int -> Int -> Vector (SDL.Point SDL.V2 CInt)
+makeHexagon :: Point -> Int -> Vector (SDL.Point SDL.V2 CInt)
 makeHexagon center size = Vector.generate 7 $ pointyHexCorner center size
 
-pointyHexCorner :: Point Int -> Int -> Int -> SDL.Point SDL.V2 CInt
+pointyHexCorner :: Point -> Int -> Int -> SDL.Point SDL.V2 CInt
 pointyHexCorner (x, y) size i = mkPoint px py
  where
   angleRad = pi / 3.0 * fromIntegral i + pi / 6.0 :: Double

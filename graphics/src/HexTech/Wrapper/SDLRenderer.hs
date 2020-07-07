@@ -2,12 +2,8 @@ module HexTech.Wrapper.SDLRenderer where
 
 import qualified SDL
 import           Control.Monad.IO.Class         ( MonadIO(..) )
-import           Control.Monad.Reader           ( MonadReader(..)
-                                                , asks
-                                                )
 import           Foreign.C.Types
 import           SDL.Vect
-import           HexTech.Config                 ( Config(..) )
 
 class (Monad m, MonadIO m) => SDLRenderer m where
   presentRenderer :: SDL.Renderer -> m ()
