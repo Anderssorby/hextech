@@ -2,13 +2,18 @@ module HexTech.Camera where
 
 import           Linear
 
-import           Control.Lens
+import           Control.Lens                   ( makeClassy )
 import qualified SDL
 import           Control.Monad.IO.Class         ( MonadIO(..) )
 import           Data.StateVar                  ( ($=) )
-import           SDL.Vect
 
 
+data Camera = Camera
+  { camOrigin :: V2 Float
+  , camZoom :: V2 Float
+  } deriving (Show, Eq)
+
+makeClassy ''Camera
 
 moveCamera :: MonadIO m => SDL.Renderer -> Camera -> m ()
 moveCamera renderer Camera { camZoom, camOrigin } = do
@@ -20,12 +25,6 @@ moveCamera renderer Camera { camZoom, camOrigin } = do
        )
   SDL.rendererClipRect renderer $= (Just $ SDL.Rectangle (SDL.P $ V2 0 0) dim)
 
-data Camera = Camera
-  { camOrigin :: V2 Float
-  , camZoom :: V2 Float
-  } deriving (Show, Eq)
-
---makeClassy_ ''Camera
 
 class Monad m => CameraControl m where
   adjustCamera :: Camera -> m ()

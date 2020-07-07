@@ -2,13 +2,13 @@
 module HexTech.Game
   ( twoPlayersGame
   , Action(..)
-  , Player
+  , Player(..)
   , Game
   , Piece
   , Resource(..)
   , PieceType
-  , runGame
-  , runRound
+  --, runGame
+  --, runRound
   , HasGame(..)
   )
 where
@@ -16,10 +16,10 @@ where
 import           HexTech.Grid                   ( Grid
                                                 , hexagonGrid
                                                 )
-import           Control.Monad.Extra            ( whileM
-                                                , fold1M
-                                                , foldM
-                                                )
+--import           Control.Monad.Extra            ( whileM
+--                                                , fold1M
+--                                                , foldM
+--                                                )
 import           Control.Lens
 import           Control.Monad.State
 import qualified Data.Map.Strict               as Map
@@ -71,9 +71,12 @@ makeClassy ''Game
 
 movePiece :: Piece -> GridPosition -> State Game ()
 movePiece piece pos = do
-  game <- get
+  gameState <- get
   put
-    (set piecePositions (Map.insert piece pos $ view piecePositions game) game)
+    (set piecePositions
+         (Map.insert piece pos $ view piecePositions gameState)
+         gameState
+    )
   return ()
 
 data Action
@@ -100,29 +103,29 @@ twoPlayersGame =
         , _gameGrid       = hexagonGrid 5
         }
 
-executePlayerAction :: Player -> Action -> State Game ()
-executePlayerAction player (Move position) = return ()
-executePlayerAction player action          = return ()
-
-executePlayerActions :: Player -> [Action] -> State Game ()
-executePlayerActions player actions =
-  foldM (\_ action -> executePlayerAction player action) () actions
-
-runRound :: (Player -> [Action]) -> State Game ()
-runRound getActions = do
-  game <- get
-  let players = game ^. gamePlayers
-  foldM (\_ p -> runPlayerRound getActions p) () players
-
-runPlayerRound :: (Player -> [Action]) -> Player -> State Game ()
-runPlayerRound getActions player = do
-  game <- get
-  let actions = getActions player
-  executePlayerActions player actions
-  return ()
-
-runGame :: (Player -> [Action]) -> State Game ()
-runGame getActions = do
-  game <- get
-  runRound getActions
-  runGame getActions
+--executePlayerAction :: Player -> Action -> State Game ()
+--executePlayerAction player (Move position) = return ()
+--executePlayerAction player action          = return ()
+--
+--executePlayerActions :: Player -> [Action] -> State Game ()
+--executePlayerActions player actions =
+--  foldM (\_ action -> executePlayerAction player action) () actions
+--
+--runRound :: (Player -> [Action]) -> State Game ()
+--runRound getActions = do
+--  game <- get
+--  let players = game ^. gamePlayers
+--  foldM (\_ p -> runPlayerRound getActions p) () players
+--
+--runPlayerRound :: (Player -> [Action]) -> Player -> State Game ()
+--runPlayerRound getActions player = do
+--  game <- get
+--  let actions = getActions player
+--  executePlayerActions player actions
+--  return ()
+--
+--runGame :: (Player -> [Action]) -> State Game ()
+--runGame getActions = do
+--  game <- get
+--  runRound getActions
+--  runGame getActions

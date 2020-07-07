@@ -1,9 +1,17 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 module HexTech.Engine.Types where
+import           Relude
 import qualified Animate
 import           Data.Text
 
 import           Data.Aeson                     ( FromJSON
                                                 , ToJSON
+                                                )
+
+--import           Control.Monad.IO.Class         ( MonadIO )
+
+import           Data.Time.Clock.System         ( getSystemTime
+                                                , systemSeconds
                                                 )
 
 frameDeltaSeconds :: Fractional a => a
@@ -40,7 +48,11 @@ class Monad m => Clock m where
 showText :: Show a => a -> Text
 showText = pack . show
 
-class Monad m => Logger m where
+class (MonadIO m, Monad m) => Logger m where
   logText :: Text -> m ()
   logShow :: Show a => a -> m ()
   logShow = logText . showText
+  logInfo :: Show a => a -> m ()
+  logInfo v = do
+      sysTime <- liftIO getSystemTime
+      logText ( "[" <> showText (systemSeconds sysTime) <> "] INFO: " <> showText v )

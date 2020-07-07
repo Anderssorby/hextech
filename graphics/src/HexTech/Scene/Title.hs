@@ -1,12 +1,12 @@
 {-# LANGUAGE TemplateHaskell #-}
 module HexTech.Scene.Title where
 
-import qualified Animate
+--import qualified Animate
 import           Control.Lens
 import           Control.Monad                  ( when )
 import           Control.Monad.Reader           ( MonadReader(..) )
 import           Control.Monad.State            ( MonadState(..)
-                                                , modify
+                                                --, modify
                                                 , gets
                                                 )
 import           KeyState

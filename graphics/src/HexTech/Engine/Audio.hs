@@ -10,6 +10,7 @@ import           Control.Exception.Safe         ( MonadThrow
 
 import           HexTech.Resource               ( Resources(..) )
 import           HexTech.Config                 ( Config(..) )
+import           HexTech.Engine.Types           ( Logger(..) )
 
 class (Monad m, MonadIO m) => Audio m where
   playGameMusic :: m ()
@@ -32,10 +33,14 @@ playGameMusic' :: (MonadReader Config m, MonadIO m) => m ()
 playGameMusic' =
   asks (rGameMusic . cResources) >>= Mixer.playMusic Mixer.Forever
 
-toggleMusic :: MonadIO m => m ()
-toggleMusic = do
+{-| Pauses or unpauses the music, but only if it is changing the state
+-}
+toggleMusic :: (MonadIO m, Logger m) => Bool -> m ()
+toggleMusic shallPlay = do
   paused <- pausedMusic
-  if paused then resumeMusic else pauseMusic
+  when (paused && shallPlay)         resumeMusic
+  when (not paused && not shallPlay) pauseMusic
+
 
 resumeMusic :: MonadIO m => m ()
 resumeMusic = Mixer.resumeMusic

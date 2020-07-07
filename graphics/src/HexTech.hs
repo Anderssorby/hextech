@@ -182,11 +182,6 @@ titleTransition = do
   adjustCamera initCamera
   modify $ titleVars .~ initTitleVars
 
---deathTransition :: (Audio m) => m ()
---deathTransition = do
---  stopGameMusic
---  playDeathSfx
-
 pauseToPlay :: Audio m => m ()
 pauseToPlay = raiseGameMusic
 
@@ -196,20 +191,8 @@ playToPause = lowerGameMusic
 instance Audio HexTech where
   playGameMusic  = playGameMusic'
   stopGameMusic  = stopGameMusic'
---  playJumpSfx    = playJumpSfx'
---  playDuckSfx    = playDuckSfx'
---  playPointSfx   = playPointSfx'
---  playBirdSfx    = playBirdSfx'
---  playHurtSfx    = playHurtSfx'
---  playLavaSfx    = playLavaSfx'
---  playQuakeSfx   = playQuakeSfx'
---  playRockSfx    = playRockSfx'
---  playRecoverSfx = playRecoverSfx'
---  playDeathSfx   = playDeathSfx'
   lowerGameMusic = lowerGameMusic'
   raiseGameMusic = raiseGameMusic'
---  playStockSfx   = playStockSfx'
---
 
 delayMilliseconds' :: Int -> IO ()
 delayMilliseconds' ms = threadDelay (1000 * ms)

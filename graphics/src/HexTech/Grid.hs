@@ -1,8 +1,7 @@
 module HexTech.Grid
-  ( Grid
+  ( Grid(..)
   , Tile
   , AxialCoord(..)
-  , gridTiles
   , getAxialCoords
   , hexagonGrid
   , toCubeCoord
@@ -13,10 +12,8 @@ where
 import           Control.Monad                  ( guard )
 import           Data.List                      ( groupBy )
 
-data Grid = Grid [[Tile]] deriving (Show, Eq)
+data Grid = Grid {gridTiles :: [[Tile]]} deriving (Show, Eq)
 
-gridTiles :: Grid -> [[Tile]]
-gridTiles (Grid tiles) = tiles
 
 data AxialCoord = AxialCoord (Int, Int) deriving (Show, Eq)
 
@@ -41,7 +38,7 @@ hexagonGrid radius = Grid $ grid
     z <- [(-radius) .. radius]
     guard $ x + y + z == 0
     return (x, y, z)
-  flat = map (\(x, y, z) -> Tile $ AxialCoord (x, y)) coords
+  flat = map (\(x, y, _) -> Tile $ AxialCoord (x, y)) coords
   grid = groupBy
     (\(Tile (AxialCoord (q1, _r1))) (Tile (AxialCoord (q2, _r2))) -> q1 == q2)
     flat

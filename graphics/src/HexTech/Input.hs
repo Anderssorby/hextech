@@ -1,10 +1,12 @@
 module HexTech.Input where
 
 import qualified SDL
-import           Control.Monad.State
 import           KeyState
 
-import           HexTech.Wrapper.SDLInput
+import           HexTech.Wrapper.SDLInput       ( SDLInput(..)
+                                                , keycodeReleased
+                                                , keycodePressed
+                                                )
 
 
 data Input = Input

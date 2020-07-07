@@ -5,15 +5,12 @@ import qualified SDL.Mixer                     as Mixer
 import qualified SDL.Font                      as Font
 import qualified SDL.Image                     as Image
 import qualified Animate
-import           Data.Text.Conversions          ( toText )
 import           Data.StateVar                  ( ($=) )
 import           SDL.Vect
 import qualified SDL.Raw.Video                 as Raw
 import qualified SDL.Internal.Numbered         as Numbered
-import           Data.Text                      ( Text )
-import           Data.Text.Conversions          ( toText )
 
-import           HexTech.Engine.Types           ( )
+import           HexTech.Engine.Types           ( showText )
 
 data Resources = Resources
   { --rMountainSprites :: Animate.SpriteSheet MountainKey SDL.Texture Seconds
@@ -36,6 +33,8 @@ data Resources = Resources
   --, rDeathSfx :: Mixer.Chunk
   --, rRecoverSfx :: Mixer.Chunk
   --, rStockSfx :: Mixer.Chunk
+  , rMuted :: SDL.Texture
+  , rUnMuted :: SDL.Texture
   , rPauseSprite :: SDL.Texture
   , rSpaceSprite :: SDL.Texture
   , rEscapeSprite :: SDL.Texture
@@ -102,13 +101,15 @@ loadResources renderer = do
     =<< Font.solid bigFont (V4 255 255 255 255) "GAME OVER"
   hiscoreSprite <- toTexture
     =<< Font.solid smallFont (V4 255 255 255 255) "HISCORE"
+  muted <- toTexture =<< Font.solid smallFont (V4 255 255 255 255) "MUSIC OFF"
+  unMuted <- toTexture =<< Font.solid smallFont (V4 255 255 255 255) "MUSIC ON"
   titleSprite <- toTexture =<< Font.shaded titleFont
                                            (V4 0xff 0xff 0xff 0xff)
                                            (V4 0x11 0x08 0x1e 0x2a)
                                            " Hex Tech "
   let drawDigit :: Int -> IO SDL.Texture
-      drawDigit d = toTexture
-        =<< Font.solid smallFont (V4 255 255 255 255) (toText $ show d)
+      drawDigit d =
+        toTexture =<< Font.solid smallFont (V4 255 255 255 255) (showText d)
   num0 <- drawDigit 0
   num1 <- drawDigit 1
   num2 <- drawDigit 2
@@ -148,6 +149,8 @@ loadResources renderer = do
   return Resources { rJungleSprites  = jungle
                    , rGroundSprites  = ground
                    , rGameMusic      = gameMusic
+                   , rMuted          = muted
+                   , rUnMuted        = unMuted
                    , rPauseSprite    = pauseSprite
                    , rSpaceSprite    = spaceSprite
                    , rEscapeSprite   = escapeSprite

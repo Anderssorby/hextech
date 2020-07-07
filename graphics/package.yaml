@@ -4,6 +4,8 @@ version: "0.1.0"
 dependencies:
 
 - base >=4.9.1.0 && <5
+- relude ^>= 0.6.0.0
+- time
 - extra
 - template-haskell
 - monad-logger >=0.3 && <0.4
@@ -33,6 +35,9 @@ dependencies:
 - hlint
 - brittany
 ghc-options: -Wall
+mixins:
+  - base hiding (Prelude)
+  - relude (Relude as Prelude)
 default-extensions:
 - DuplicateRecordFields
 - FlexibleContexts
@@ -47,6 +52,7 @@ default-extensions:
 # defined below is just a thin wrapper.
 library:
   source-dirs: src
+
 
 # Runnable executable for our application
 executables:

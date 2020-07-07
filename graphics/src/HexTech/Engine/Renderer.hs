@@ -13,18 +13,22 @@ import qualified Data.Vector.Storable          as Vector
 import           Data.Vector.Storable           ( Vector )
 
 import           HexTech.Config                 ( Config(..) )
-import           HexTech.Resource               ( toDigit
-                                                , toDigitReverse
+import           HexTech.Resource               ( toDigitReverse
                                                 , Digit(..)
                                                 , Resources(..)
                                                 )
 import           HexTech.Engine.Types
 import           HexTech.Wrapper.SDLRenderer    ( SDLRenderer(..) )
+import           HexTech.Grid                   ( Grid(..)
+                                                , tileCoords
+                                                , getAxialCoords
+                                                )
 
 class (Monad m
       , SDLRenderer m
       , MonadReader Config m
       , MonadIO m
+      , Logger m
       ) => Renderer m where
 
   clearScreen :: m ()
@@ -214,3 +218,40 @@ drawDigits int (x, y) = mapM_ (\(i, d) -> drawDigit d (x - i * 16, y))
 --  then dist' + 1280
 --  else dist'
 --  where dist' = dist + speed
+
+
+gridToPixels :: Grid -> (Int, Int) -> [Vector (SDL.Point SDL.V2 CInt)]
+gridToPixels grid (gx, gy) = do
+  let tiles = gridTiles grid
+  row  <- tiles
+  tile <- row
+  let
+    (x, y)    = getAxialCoords $ tileCoords tile
+    lineWidth = 0
+    size      = 50 :: Float
+    xOffset   = sqrt 3 * size :: Float
+    yOffset   = 1.5 * size :: Float
+    py =
+      round $ fromIntegral x + yOffset * fromIntegral y - 2 * lineWidth :: Int
+    px =
+      ( round
+      $ fromIntegral x
+      + xOffset
+      * (fromIntegral x + 0.5 * fromIntegral (y `rem` 2 :: Int))
+      - 2
+      * lineWidth
+      ) :: Int
+
+  return $ makeHexagon (gx + px, gy + py) $ round size
+
+type Point t = (t, t)
+
+makeHexagon :: Point Int -> Int -> Vector (SDL.Point SDL.V2 CInt)
+makeHexagon center size = Vector.generate 7 $ pointyHexCorner center size
+
+pointyHexCorner :: Point Int -> Int -> Int -> SDL.Point SDL.V2 CInt
+pointyHexCorner (x, y) size i = mkPoint px py
+ where
+  angleRad = pi / 3.0 * fromIntegral i + pi / 6.0
+  px       = round (fromIntegral x + fromIntegral size * cos (angleRad)) :: CInt
+  py       = round (fromIntegral y + fromIntegral size * sin (angleRad)) :: CInt
