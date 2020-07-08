@@ -16,15 +16,17 @@ data Input = Input
   , iEscape :: KeyState Int
   , iQuit :: Bool
   , iMute :: KeyState Int
+  , iShowCoords :: KeyState Int
   } deriving (Show, Eq)
 
 initInput :: Input
-initInput = Input { iSpace  = initKeyState
-                  , iUp     = initKeyState
-                  , iDown   = initKeyState
-                  , iEscape = initKeyState
-                  , iQuit   = False
-                  , iMute   = initKeyState
+initInput = Input { iSpace      = initKeyState
+                  , iUp         = initKeyState
+                  , iDown       = initKeyState
+                  , iEscape     = initKeyState
+                  , iQuit       = False
+                  , iMute       = initKeyState
+                  , iShowCoords = initKeyState
                   }
 
 {-| This class describes type implementations that can handle user input and record it in a Monad
@@ -42,14 +44,15 @@ updateInput' = do
   setInput (stepControl events input)
 
 stepControl :: [SDL.EventPayload] -> Input -> Input
-stepControl events Input { iSpace, iUp, iDown, iEscape, iMute } = Input
-  { iSpace  = next 1 [SDL.KeycodeSpace] iSpace
-  , iUp     = next 1 [SDL.KeycodeUp, SDL.KeycodeW] iUp
-  , iDown   = next 1 [SDL.KeycodeDown, SDL.KeycodeS] iDown
-  , iEscape = next 1 [SDL.KeycodeEscape, SDL.KeycodeQ] iEscape
-  , iMute   = next 1 [SDL.KeycodeM] iMute
-  , iQuit   = elem SDL.QuitEvent events
-  }
+stepControl events Input { iSpace, iUp, iDown, iEscape, iMute, iShowCoords } =
+  Input { iSpace      = next 1 [SDL.KeycodeSpace, SDL.KeycodeP] iSpace
+        , iUp         = next 1 [SDL.KeycodeUp, SDL.KeycodeW] iUp
+        , iDown       = next 1 [SDL.KeycodeDown, SDL.KeycodeS] iDown
+        , iEscape     = next 1 [SDL.KeycodeEscape, SDL.KeycodeQ] iEscape
+        , iMute       = next 1 [SDL.KeycodeM] iMute
+        , iShowCoords = next 1 [SDL.KeycodeN] iShowCoords
+        , iQuit       = elem SDL.QuitEvent events
+        }
  where
   next count keycodes keystate | or $ map pressed keycodes = pressedKeyState
                                | or $ map released keycodes = releasedKeyState

@@ -13,6 +13,15 @@ import           Data.Aeson                     ( FromJSON
 import           Data.Time.Clock.System         ( getSystemTime
                                                 , systemSeconds
                                                 )
+import           System.Console.ANSI
+
+newtype Point = Point (Int, Int) deriving (Show, Eq)
+
+p :: Int -> Int -> Point
+p x y = Point (x, y)
+
+(<+>) :: Point -> Point -> Point
+(Point (x1, y1)) <+> (Point (x2, y2)) = Point (x1 + x2, y1 + y2)
 
 frameDeltaSeconds :: Fractional a => a
 frameDeltaSeconds = 0.016667
@@ -54,5 +63,7 @@ class (MonadIO m, Monad m) => Logger m where
   logShow = logText . showText
   logInfo :: Show a => a -> m ()
   logInfo v = do
+      liftIO $ setSGR [SetColor Foreground Vivid Cyan]
       sysTime <- liftIO getSystemTime
       logText ( "[" <> showText (systemSeconds sysTime) <> "] INFO: " <> showText v )
+      liftIO $ setSGR [Reset]  -- Reset to default colour scheme

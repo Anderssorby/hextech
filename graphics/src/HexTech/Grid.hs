@@ -1,26 +1,36 @@
 module HexTech.Grid
   ( Grid(..)
-  , Tile
+  , GridArgs(..)
+  , Tile(..)
   , AxialCoord(..)
+  , CubeCoord(..)
   , getAxialCoords
   , hexagonGrid
   , toCubeCoord
   , toAxialCoords
-  , tileCoords
   )
 where
 
 import           Control.Monad                  ( guard )
-import           Data.List                      ( groupBy )
+import qualified Data.Map.Strict               as Map
 import           Control.Lens
+import           HexTech.Engine.Types           ( Point(..)
+                                                , p
+                                                , (<+>)
+                                                )
 
-data Grid = Grid {gridTiles :: [[Tile]]} deriving (Show, Eq)
+
+newtype AxialCoord = AxialCoord (Int, Int) deriving (Show, Eq, Ord)
+newtype CubeCoord = CubeCoord (Int, Int, Int) deriving (Show, Eq, Ord)
+
+data Tile = Tile {tileCoords :: CubeCoord, tileCorners :: [Point], tileCenter :: Point } deriving (Show, Eq)
+makeLenses ''Tile
 
 
-newtype Point = Point (Int, Int) deriving (Show, Eq)
+data Grid = Grid {gridTiles :: Map.Map CubeCoord Tile} deriving (Show, Eq)
+makeLenses ''Grid
 
-newtype AxialCoord = AxialCoord (Int, Int) deriving (Show, Eq)
-newtype CubeCoord = CubeCoord (Int, Int, Int) deriving (Show, Eq)
+data GridArgs = GridArgs {gRadius :: Int, gPosition :: Point, gSize :: Int}
 
 getAxialCoords :: CubeCoord -> (Int, Int)
 getAxialCoords (CubeCoord (x, _y, z)) = (x, z)
@@ -31,11 +41,6 @@ getAxialCoords (CubeCoord (x, _y, z)) = (x, z)
 --instance Eq (Vector Point) where
 --  v1 == v2 = Vector.all $ Vector.zipWith (==) v1 v2
 
-data Tile = Tile {tileCoords :: CubeCoord, tileCorners :: [Point] } deriving (Show, Eq)
-
-
-makeClassy_ ''Tile
-
 toAxialCoords :: CubeCoord -> AxialCoord
 toAxialCoords (CubeCoord (x, _, z)) = AxialCoord (x, z)
 
@@ -43,38 +48,36 @@ toCubeCoord :: AxialCoord -> CubeCoord
 toCubeCoord (AxialCoord (q, r)) = CubeCoord (q, (-q) + (-r), r)
 
 
-hexagonGrid :: Int -> Grid
-hexagonGrid radius = Grid { gridTiles = grid }
+hexagonGrid :: GridArgs -> Grid
+hexagonGrid args@(GridArgs { gRadius = radius, gSize }) = Grid
+  { gridTiles = tiles
+  }
  where
   coords = do
     x <- [(-radius) .. radius]
     y <- [(-radius) .. radius]
     z <- [(-radius) .. radius]
     guard $ x + y + z == 0
-    return (x, y, z)
-  flat = map
-    (\(x, y, z) -> Tile { tileCoords  = CubeCoord (x, y, z)
-                        , tileCorners = calcTileCorners (x, z) (450, 450)
-                        }
+    return $ CubeCoord (x, y, z)
+  tiles = Map.fromList $ map
+    (\coord@(CubeCoord (x, _, z)) ->
+      let cp = calcTileCorners args (x, z)
+      in  ( coord
+          , Tile { tileCoords  = coord
+                 , tileCorners = makeHexagon cp gSize
+                 , tileCenter  = cp
+                 }
+          )
     )
     coords
-  grid = groupBy
-    (\t1 t2 ->
-      ((getAxialCoords . tileCoords) t1)
-        ^. _1
-        == ((getAxialCoords . tileCoords) t2)
-        ^. _1
-    )
-    flat
 
-calcTileCorners :: (Int, Int) -> (Int, Int) -> [Point]
-calcTileCorners (x, y) (gx, gy) = makeHexagon (Point (gx + px, gy + py))
-  $ round size
+calcTileCorners :: GridArgs -> (Int, Int) -> Point
+calcTileCorners (GridArgs { gSize = size, gPosition }) (x, y) =
+  (p px py <+> gPosition)
  where
   lineWidth = 0
-  size      = 50 :: Float
-  xOffset   = sqrt 3 * size :: Float
-  yOffset   = 1.5 * size :: Float
+  xOffset   = sqrt 3 * fromIntegral size :: Float
+  yOffset   = 1.5 * fromIntegral size :: Float
   py = round $ fromIntegral x + yOffset * fromIntegral y - 2 * lineWidth :: Int
   px =
     ( round

@@ -14,7 +14,6 @@ import qualified SDL
 import qualified SDL.Mixer                     as Mixer
 import qualified SDL.Font                      as Font
 import qualified Data.Text.IO                  as T
-import           KeyState
 
 
 import           HexTech.Engine.Types           ( Clock(..)
@@ -62,7 +61,7 @@ import           HexTech.Resource               ( loadResources
                                                 , freeResources
                                                 )
 import           HexTech.Input                  ( HasInput
-                                                , iEscape
+                                                --, iEscape
                                                 , iQuit
                                                 , getInput
                                                 , setInput
@@ -94,7 +93,7 @@ main = do
   Mixer.openAudio Mixer.defaultAudio 256
   window <- SDL.createWindow
     "Hex Tech"
-    SDL.defaultWindow { SDL.windowInitialSize = SDL.V2 1280 720 }
+    SDL.defaultWindow { SDL.windowInitialSize = SDL.V2 1280 920 }
   renderer  <- SDL.createRenderer window (-1) SDL.defaultRenderer
   resources <- loadResources renderer
   --mkObstacles <- streamOfObstacles <$> getStdGen
@@ -140,24 +139,17 @@ mainLoop = do
   delayMilliseconds frameDeltaMilliseconds
   nextScene <- gets vNextScene
   stepScene scene nextScene
-  let quit =
-        nextScene
-          == Scene'Quit
-          || iQuit input
-          || ksStatus (iEscape input)
-          == KeyStatus'Pressed
+  let quit = nextScene == Scene'Quit || iQuit input
   unless quit mainLoop
  where
 
   step scene = do
     case scene of
-      Scene'Title -> titleStep
-      Scene'Play  -> playStep
-      Scene'Pause -> pauseStep
-      --Scene'Death    -> deathStep
-      --Scene'GameOver -> gameOverStep
-      Scene'Quit  -> return ()
-      _           -> return ()
+      Scene'Title    -> titleStep
+      Scene'Play     -> playStep
+      Scene'Pause    -> pauseStep
+      Scene'GameOver -> return ()
+      Scene'Quit     -> return ()
 
   stepScene scene nextScene = do
     when (nextScene /= scene) $ do
@@ -167,9 +159,6 @@ mainLoop = do
           Scene'Title -> playTransition
           Scene'Pause -> pauseToPlay
           _           -> return ()
-        --Scene'Death -> case scene of
-        --  Scene'Play -> deathTransition
-        --  _          -> return ()
         Scene'Pause -> case scene of
           Scene'Play -> playToPause
           _          -> return ()
@@ -177,8 +166,10 @@ mainLoop = do
         Scene'Quit     -> return ()
       modify (\v -> v { vScene = nextScene })
 
-titleTransition :: (HasTitleVars a, MonadState a m, CameraControl m) => m ()
+titleTransition
+  :: (HasTitleVars a, MonadState a m, CameraControl m, Audio m) => m ()
 titleTransition = do
+  stopGameMusic
   adjustCamera initCamera
   modify $ titleVars .~ initTitleVars
 

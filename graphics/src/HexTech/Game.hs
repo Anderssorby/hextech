@@ -16,9 +16,12 @@ module HexTech.Game
   )
 where
 
-import           HexTech.Grid                   ( Grid
+import           HexTech.Grid                   ( Grid(..)
+                                                , GridArgs(..)
+                                                , CubeCoord(..)
                                                 , hexagonGrid
                                                 )
+import qualified HexTech.Engine.Types          as T
 --import           Control.Monad.Extra            ( whileM
 --                                                , fold1M
 --                                                , foldM
@@ -39,7 +42,7 @@ pieceStrength FastDrone = 1
 
 data ResourceType = Plus | Star deriving (Show, Eq)
 
-type GridPosition = (Int, Int, Int)
+type GridPosition = CubeCoord
 
 data Resource = FreeResource ResourceType GridPosition deriving (Show, Eq)
 
@@ -97,14 +100,17 @@ twoPlayersGame =
       antoine     = Player { playerName = "Antoine" }
       leaderPiece = Piece { pieceType = Commander }
       players     = [anders, antoine]
+      gridArgs = GridArgs { gRadius = 5, gSize = 50, gPosition = T.p 550 450 }
   in  Game
         { _gamePlayers    = players
         , _playerPieces   = Map.fromList
                               [(anders, [leaderPiece]), (antoine, [leaderPiece])]
         , _piecePositions = Map.fromList
-          [(leaderPiece, (1, 0, 0)), (leaderPiece, (2, 3, 1))]
+                              [ (leaderPiece, CubeCoord (1, 0, 0))
+                              , (leaderPiece, CubeCoord (2, 3, 1))
+                              ]
         , _freeResources  = []
-        , _gameGrid       = hexagonGrid 5
+        , _gameGrid       = hexagonGrid gridArgs
         }
 
 --executePlayerAction :: Player -> Action -> State Game ()

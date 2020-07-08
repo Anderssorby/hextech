@@ -69,13 +69,14 @@ initPlayVars = PlayVars { pvSeconds = 0, pvZoom = 1 }
 
 data Settings = Settings
     { _sMuted :: Bool
+    , _sShowCoords :: Bool
     } deriving (Show, Eq)
 
 
 makeClassy ''Settings
 
 initSettings :: Settings
-initSettings = Settings { _sMuted = False }
+initSettings = Settings { _sMuted = False, _sShowCoords = True }
 
 modifySettings
   :: (MonadState s m, HasSettings s) => (Settings -> Settings) -> m ()

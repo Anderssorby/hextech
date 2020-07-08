@@ -1,22 +1,25 @@
 module HexTech.Scene.Play where
 
 --import qualified Animate
+import qualified Data.Map.Strict               as Map
 import           Control.Monad                  ( when
+                                                --, foldM
                                                 --, mapM_
                                                 )
+import qualified Data.Vector.Storable          as Vector
 import           Control.Lens            hiding ( zoom )
 import           Control.Monad.State            ( MonadState(..)
                                                 , modify
                                                 , gets
                                                 )
 import           Control.Monad.Reader           ( MonadReader )
---import qualified Data.Text.IO                  as T
 import           KeyState
 
 import           HexTech.Input                  ( HasInput(..)
                                                 , Input(..)
                                                 )
 import           HexTech.Config                 ( Config(..) )
+import qualified HexTech.State                 as State
 import           HexTech.State                  ( Vars(..)
                                                 , HasSettings(..)
                                                 , modifySettings
@@ -25,6 +28,7 @@ import           HexTech.State                  ( Vars(..)
                                                 )
 import qualified HexTech.Engine.Audio          as Audio
 import           HexTech.Engine.Audio           ( Audio(..) )
+import qualified HexTech.Engine.Types          as T
 import           HexTech.Engine.Types           ( Logger(..)
                                                 , Clock(..)
                                                 , frameDeltaSeconds
@@ -42,7 +46,8 @@ import           HexTech.Engine.Renderer        ( Renderer(..)
                                                 , drawTextureSprite
                                                 , drawDigits
                                                 , drawLines
-                                                , gridToPixels
+                                                , toSDLPoint
+                                                --, gridToPixels
                                                 , Color(..)
                                                 , setColor
                                                 , setColorV4
@@ -51,7 +56,10 @@ import           HexTech.Engine.Renderer        ( Renderer(..)
 import           HexTech.Camera                 ( CameraControl(..) )
 import           HexTech.Wrapper.SDLRenderer    ( SDLRenderer(..) )
 import           HexTech.Game                   ( HasGame(..) )
-import           HexTech.Grid                   ( Grid )
+import           HexTech.Grid                   ( Grid(..)
+                                                , Tile(..)
+                                                , CubeCoord(..)
+                                                )
 
 
 
@@ -59,6 +67,7 @@ import           HexTech.Grid                   ( Grid )
 playTransition
   :: (HasPlayVars s, HasSettings s, MonadState s m, Audio m, Logger m) => m ()
 playTransition = do
+  playVars .= State.initPlayVars
   --PlayVars { pvUpcomingObstacles } <- gets (view playVars)
   --modify $ playVars .~ (initPlayVars pvUpcomingObstacles)
   playGameMusic
@@ -87,7 +96,13 @@ playStep
   => m ()
 playStep = do
   input <- getInput
-  when (ksStatus (iSpace input) == KeyStatus'Pressed) (toScene Scene'Pause)
+  let shallPause =
+        (  ksStatus (iSpace input)
+        == KeyStatus'Pressed
+        || ksStatus (iEscape input)
+        == KeyStatus'Pressed
+        )
+  when shallPause (toScene Scene'Pause)
   updatePlay
   updateGameMusic
   drawPlay
@@ -111,9 +126,9 @@ updatePlay = do
   updateSeconds
   updateZoom
   updateCamera
-  updateMuted
-  isDead <- getDead
-  when isDead (toScene Scene'Title)
+  updateSettings
+  --isDead <- getDead
+  --when isDead (toScene Scene'Title)
 
 {-| Draw the game play view
 -}
@@ -130,24 +145,38 @@ drawPlay = do
   pv   <- gets (view playVars)
   grid <- gets $ view (game . gameGrid)
   disableZoom
-  drawGrid grid (450, 450)
+  drawGrid grid
   drawControlsText (50, 470)
-  drawDigits (secondsToInteger $ pvSeconds pv) (50, 50)
+  drawDigits (secondsToInteger $ pvSeconds pv) (T.p 50 50)
   muted <- gets $ view (settings . sMuted)
   let muteSprite | muted     = (rMuted . cResources)
                  | otherwise = (rUnMuted . cResources)
 
-  drawTextureSprite muteSprite (900, 50)
+  drawTextureSprite muteSprite (1000, 50)
   enableZoom
 
-drawGrid :: (Renderer m) => Grid -> (Int, Int) -> m ()
-drawGrid grid point = do
-  let points = gridToPixels grid point
+drawGrid :: (HasSettings s, MonadState s m, Renderer m) => Grid -> m ()
+drawGrid grid = do
+  let tiles = gridTiles grid
+  mapM_ drawTile $ Map.elems tiles
+  drawCommander Commander'Idle (300, 300)
+
+drawTile :: (HasSettings s, MonadState s m, Renderer m) => Tile -> m ()
+drawTile tile = do
+  let points                = (map toSDLPoint . tileCorners) tile
+      p                     = tileCenter tile
+      (CubeCoord (x, y, z)) = tileCoords tile
   oldColor <- getColorV4
   setColor Green
-  mapM_ drawLines points
+  drawLines $ Vector.fromList points
   setColorV4 oldColor
-  drawCommander Commander'Idle (300, 300)
+
+  showCoords <- gets $ view (settings . sShowCoords)
+  when showCoords $ do
+    drawDigits (fromIntegral x) (T.p (-25) (-10) T.<+> p)
+    drawDigits (fromIntegral y) (T.p (0) (-10) T.<+> p)
+    drawDigits (fromIntegral z) (T.p (25) (-10) T.<+> p)
+
 
 
 modifyPlayVars
@@ -156,11 +185,11 @@ modifyPlayVars f = modify $ playVars %~ f
 
 updateSeconds :: (MonadState s m, HasPlayVars s) => m ()
 updateSeconds =
-  modifyPlayVars $ \pv -> pv { pvSeconds = pvSeconds pv + frameDeltaSeconds }
+  playVars %= \pv -> pv { pvSeconds = pvSeconds pv + frameDeltaSeconds }
 
 
 updateZoom :: (MonadState s m, HasPlayVars s) => m ()
-updateZoom = modifyPlayVars $ \pv -> pv { pvZoom = pvZoom pv }
+updateZoom = playVars %= \pv -> pv { pvZoom = pvZoom pv }
 
 updateCamera :: (MonadState s m, HasPlayVars s, CameraControl m) => m ()
 updateCamera = do
@@ -173,15 +202,25 @@ updateCamera = do
 getDead :: (MonadState s m, HasPlayVars s) => m Bool
 getDead = (>= 100) <$> gets (pvSeconds . view playVars)
 
+updateSettings
+  :: (HasSettings s, MonadState s m, HasInput m, Logger m, Audio m) => m ()
+updateSettings = do
+  updateMuted
+  updateShowCoords
+
 updateMuted
   :: (HasSettings s, MonadState s m, HasInput m, Logger m, Audio m) => m ()
 updateMuted = do
   input <- getInput
   when (ksStatus (iMute input) == KeyStatus'Pressed) $ do
-    --logShow input
-    --sett <- gets (view settings)
-    --logShow sett
     modifySettings (\s -> sMuted .~ (not $ s ^. sMuted) $ s)
+
+updateShowCoords
+  :: (HasSettings s, MonadState s m, HasInput m, Logger m, Audio m) => m ()
+updateShowCoords = do
+  input <- getInput
+  when (ksStatus (iShowCoords input) == KeyStatus'Pressed) $ do
+    modifySettings (\s -> sShowCoords .~ (not $ s ^. sShowCoords) $ s)
 
 pauseStep
   :: ( MonadState Vars m
@@ -197,9 +236,12 @@ pauseStep = do
   input <- getInput
   drawPlay
   drawPause
-  updateMuted
+  updateSettings
   updateGameMusic
-  when (ksStatus (iSpace input) == KeyStatus'Pressed) (toScene Scene'Play)
+  let shallResume = (ksStatus (iSpace input) == KeyStatus'Pressed)
+      shallQuit   = (ksStatus (iEscape input) == KeyStatus'Pressed)
+  when shallResume (toScene Scene'Play)
+  when shallQuit   (toScene Scene'Title)
 
 drawPauseText
   :: (SDLRenderer m, Renderer m, MonadReader Config m) => (Int, Int) -> m ()

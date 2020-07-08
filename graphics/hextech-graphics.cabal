@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ff400b885631dbfe2b91b4ec2c950401b152d09f3a1c2f507f310b0e46c9e8b6
+-- hash: aa1886e74a2b3dd965043f3b99d72bc1d95da4071daa9e4cb3ca84eb4e747ca7
 
 name:           hextech-graphics
 version:        0.1.0
@@ -40,6 +40,7 @@ library
       StateVar
     , aeson
     , animate
+    , ansi-terminal
     , array
     , base >=4.9.1.0 && <5
     , brittany
@@ -98,6 +99,7 @@ executable hextech-graphics
       StateVar
     , aeson
     , animate
+    , ansi-terminal
     , array
     , base >=4.9.1.0 && <5
     , brittany
@@ -141,6 +143,7 @@ test-suite hextech-graphics-test
       StateVar
     , aeson
     , animate
+    , ansi-terminal
     , array
     , base >=4.9.1.0 && <5
     , brittany

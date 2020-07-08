@@ -127,27 +127,30 @@ loadResources renderer = do
   let drawDigit :: Int -> IO SDL.Texture
       drawDigit d =
         toTexture =<< Font.solid smallFont (V4 255 255 255 255) (showText d)
-  num0 <- drawDigit 0
-  num1 <- drawDigit 1
-  num2 <- drawDigit 2
-  num3 <- drawDigit 3
-  num4 <- drawDigit 4
-  num5 <- drawDigit 5
-  num6 <- drawDigit 6
-  num7 <- drawDigit 7
-  num8 <- drawDigit 8
-  num9 <- drawDigit 9
+  minus <- toTexture =<< Font.solid smallFont (V4 255 255 255 255) "-"
+
+  num0  <- drawDigit 0
+  num1  <- drawDigit 1
+  num2  <- drawDigit 2
+  num3  <- drawDigit 3
+  num4  <- drawDigit 4
+  num5  <- drawDigit 5
+  num6  <- drawDigit 6
+  num7  <- drawDigit 7
+  num8  <- drawDigit 8
+  num9  <- drawDigit 9
   let digitSprites = \n -> case n of
-        Digit'0 -> num0
-        Digit'1 -> num1
-        Digit'2 -> num2
-        Digit'3 -> num3
-        Digit'4 -> num4
-        Digit'5 -> num5
-        Digit'6 -> num6
-        Digit'7 -> num7
-        Digit'8 -> num8
-        Digit'9 -> num9
+        Digit'Minus -> minus
+        Digit'0     -> num0
+        Digit'1     -> num1
+        Digit'2     -> num2
+        Digit'3     -> num3
+        Digit'4     -> num4
+        Digit'5     -> num5
+        Digit'6     -> num6
+        Digit'7     -> num7
+        Digit'8     -> num8
+        Digit'9     -> num9
   --dinoSprites <-
   --  Animate.readSpriteSheetJSON loadTexture "resource/dino.json" :: IO
   --    (Animate.SpriteSheet DinoKey SDL.Texture Seconds)
@@ -225,14 +228,18 @@ data Digit
   | Digit'7
   | Digit'8
   | Digit'9
+  | Digit'Minus
   deriving (Show, Eq, Enum, Bounded)
 
 digitToInt :: Digit -> Int
 digitToInt = fromEnum
 
 toDigit :: Integer -> [Digit]
-toDigit i = (if next == 0 then [] else toDigit next) ++ (single (i `mod` 10))
+toDigit i | i < 0     = Digit'Minus : toDigit (-i)
+          | next == 0 = part
+          | otherwise = toDigit next ++ part
  where
+  part = single (i `mod` 10)
   next = i `div` 10
   single 0 = [Digit'0]
   single 1 = [Digit'1]

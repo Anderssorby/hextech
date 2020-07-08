@@ -31,6 +31,7 @@ dependencies:
 - text
 - text-conversions
 - random
+- ansi-terminal
 # Dev
 - hlint
 - brittany
@@ -49,9 +50,9 @@ default-extensions:
 # defined below is just a thin wrapper.
 library:
   source-dirs: src
-  mixins:
-  - base hiding (Prelude)
-  - relude (Relude as Prelude)
+  #mixins:
+  #- base hiding (Prelude)
+  #- relude (Relude as Prelude)
 
 
 # Runnable executable for our application

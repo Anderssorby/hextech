@@ -11,7 +11,7 @@ import           SDL.Vect                       ( V2(..)
                                                 , (*^)
                                                 )
 import           Control.Monad.Reader
-import qualified Data.Vector.Storable          as Vector
+--import qualified Data.Vector.Storable          as Vector
 import           Data.Vector.Storable           ( Vector )
 
 import           HexTech.Config                 ( Config(..) )
@@ -22,10 +22,7 @@ import           HexTech.Resource               ( toDigitReverse
                                                 )
 import           HexTech.Engine.Types
 import           HexTech.Wrapper.SDLRenderer    ( SDLRenderer(..) )
-import           HexTech.Grid                   ( Grid(..)
-                                                , tileCoords
-                                                , getAxialCoords
-                                                )
+
 
 class (Monad m
       , SDLRenderer m
@@ -84,11 +81,18 @@ groundY = 16 * 28
 riverY = 16 * 36
 
 --
+type SDLPoint = SDL.Point SDL.V2 CInt
+
 mkPoint :: (Integral a, Integral b) => a -> a -> SDL.Point SDL.V2 b
 mkPoint x y = SDL.P $ SDL.V2 (fromIntegral x) (fromIntegral y)
 
-drawLine :: (MonadIO m) => SDL.Renderer -> (Int, Int) -> (Int, Int) -> m ()
-drawLine r (ox, oy) (tx, ty) = SDL.drawLine r (mkPoint ox oy) (mkPoint tx ty)
+toSDLPoint :: Point -> SDLPoint
+toSDLPoint (Point (x, y)) = mkPoint x y
+
+drawLine :: (Renderer m) => Point -> Point -> m ()
+drawLine p1 p2 = do
+  renderer <- asks cRenderer
+  SDL.drawLine renderer (toSDLPoint p1) (toSDLPoint p2)
 
 drawLines
   :: (MonadIO m, MonadReader Config m) => Vector (SDL.Point SDL.V2 CInt) -> m ()
@@ -237,10 +241,11 @@ drawDigit d = drawTextureSprite (flip rDigitSprites d . cResources)
 drawDigits
   :: (SDLRenderer m, Renderer m, MonadReader Config m)
   => Integer
-  -> (Int, Int)
+  -> Point
   -> m ()
-drawDigits int (x, y) = mapM_ (\(i, d) -> drawDigit d (x - i * 16, y))
-                              (zip [0 ..] (toDigitReverse int))
+drawDigits int (Point (x, y)) = mapM_
+  (\(i, d) -> drawDigit d (x - i * 16, y))
+  (zip [0 ..] (toDigitReverse int))
 --stepHorizontalDistance :: Distance -> Distance -> Distance
 --stepHorizontalDistance dist speed = if dist' <= -1280
 --  then dist' + 1280
@@ -258,39 +263,38 @@ drawJungle = drawHorizontalScrollImage (rJungleSprites . cResources) 8
 
 drawGround :: Renderer m => (Int, Int) -> m ()
 drawGround = drawHorizontalScrollImage (rGroundSprites . cResources) 2
-
-gridToPixels :: Grid -> (Int, Int) -> [Vector (SDL.Point SDL.V2 CInt)]
-gridToPixels grid (gx, gy) = do
-  let tiles = gridTiles grid
-  row  <- tiles
-  tile <- row
-  let
-    (x, y)    = getAxialCoords $ tileCoords tile
-    lineWidth = 0
-    size      = 50 :: Float
-    xOffset   = sqrt 3 * size :: Float
-    yOffset   = 1.5 * size :: Float
-    py =
-      round $ fromIntegral x + yOffset * fromIntegral y - 2 * lineWidth :: Int
-    px =
-      ( round
-      $ fromIntegral x
-      + xOffset
-      * (fromIntegral x + 0.5 * fromIntegral (y `rem` 2 :: Int))
-      - 2
-      * lineWidth
-      ) :: Int
-
-  return $ makeHexagon (gx + px, gy + py) $ round size
-
-type Point = (Int, Int)
-
-makeHexagon :: Point -> Int -> Vector (SDL.Point SDL.V2 CInt)
-makeHexagon center size = Vector.generate 7 $ pointyHexCorner center size
-
-pointyHexCorner :: Point -> Int -> Int -> SDL.Point SDL.V2 CInt
-pointyHexCorner (x, y) size i = mkPoint px py
- where
-  angleRad = pi / 3.0 * fromIntegral i + pi / 6.0 :: Double
-  px       = round (fromIntegral x + fromIntegral size * cos (angleRad)) :: CInt
-  py       = round (fromIntegral y + fromIntegral size * sin (angleRad)) :: CInt
+--
+--gridToPixels :: Grid -> (Int, Int) -> [Vector (SDL.Point SDL.V2 CInt)]
+--gridToPixels grid (gx, gy) = do
+--  let tiles = gridTiles grid
+--  row  <- tiles
+--  tile <- row
+--  let
+--    (x, y)    = getAxialCoords $ tileCoords tile
+--    lineWidth = 0
+--    size      = 50 :: Float
+--    xOffset   = sqrt 3 * size :: Float
+--    yOffset   = 1.5 * size :: Float
+--    py =
+--      round $ fromIntegral x + yOffset * fromIntegral y - 2 * lineWidth :: Int
+--    px =
+--      ( round
+--      $ fromIntegral x
+--      + xOffset
+--      * (fromIntegral x + 0.5 * fromIntegral (y `rem` 2 :: Int))
+--      - 2
+--      * lineWidth
+--      ) :: Int
+--
+--  return $ makeHexagon (gx + px gy + py) $ round size
+--
+--
+--makeHexagon :: Point -> Int -> Vector (SDL.Point SDL.V2 CInt)
+--makeHexagon center size = Vector.generate 7 $ pointyHexCorner center size
+--
+--pointyHexCorner :: Point -> Int -> Int -> SDL.Point SDL.V2 CInt
+--pointyHexCorner (Point (x, y)) size i = mkPoint px py
+-- where
+--  angleRad = pi / 3.0 * fromIntegral i + pi / 6.0 :: Double
+--  px       = round (fromIntegral x + fromIntegral size * cos (angleRad)) :: CInt
+--  py       = round (fromIntegral y + fromIntegral size * sin (angleRad)) :: CInt
