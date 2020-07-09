@@ -17,7 +17,7 @@ import           HexTech.Game                   ( Game
                                                 )
 
 import           HexTech.Config                 ( Config(..) )
-import           HexTech.Scene                  ( Scene(..) )
+import           HexTech.Scene                  ( SceneType(..) )
 import           HexTech.Scene.Title            ( TitleVars
                                                 , HasTitleVars(..)
                                                 , initTitleVars
@@ -84,8 +84,8 @@ modifySettings f = modify $ settings %~ f
 
 data Vars = Vars
   { vGame :: Game
-  , vScene :: Scene
-  , vNextScene :: Scene
+  , vScene :: SceneType
+  , vNextScene :: SceneType
   , vTitle :: TitleVars
   , vPlay :: PlayVars
   --, vGameOver :: GameOverVars
@@ -108,7 +108,7 @@ initVars = Vars twoPlayersGame
                 initSettings
 
 
-toScene' :: MonadState Vars m => Scene -> m ()
+toScene' :: MonadState Vars m => SceneType -> m ()
 toScene' scene = modify (\v -> v { vNextScene = scene })
 
 instance HasGame Vars where

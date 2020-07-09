@@ -44,7 +44,7 @@ import           HexTech.State                  ( Vars(..)
                                                 , setInput'
                                                 , toScene'
                                                 )
-import           HexTech.Scene                  ( Scene(..)
+import           HexTech.Scene                  ( SceneType(..)
                                                 , SceneManager(..)
                                                 )
 import           HexTech.Scene.Title            ( HasTitleVars

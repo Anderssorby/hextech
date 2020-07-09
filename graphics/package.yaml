@@ -46,6 +46,8 @@ default-extensions:
 - ScopedTypeVariables
 - OverloadedStrings
 - TemplateHaskell
+- MultiParamTypeClasses
+- GADTs
 # The library contains all of our application code. The executable
 # defined below is just a thin wrapper.
 library:

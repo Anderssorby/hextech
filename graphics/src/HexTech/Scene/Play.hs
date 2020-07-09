@@ -35,7 +35,7 @@ import           HexTech.Engine.Types           ( Logger(..)
                                                 , secondsToInteger
                                                 )
 import           HexTech.Scene                  ( SceneManager(..)
-                                                , Scene(..)
+                                                , SceneType(..)
                                                 )
 import           HexTech.Resource               ( Resources(..)
                                                 , CommanderKey(..)
