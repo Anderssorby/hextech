@@ -4,6 +4,9 @@ module HexTech.Grid
   , Tile(..)
   , AxialCoord(..)
   , CubeCoord(..)
+  , cubeCoord
+  , (+>)
+  , ccToTuple
   , getAxialCoords
   , hexagonGrid
   , toCubeCoord
@@ -23,6 +26,17 @@ import           HexTech.Engine.Types           ( Point(..)
 newtype AxialCoord = AxialCoord (Int, Int) deriving (Show, Eq, Ord)
 newtype CubeCoord = CubeCoord (Int, Int, Int) deriving (Show, Eq, Ord)
 
+cubeCoord :: Int -> Int -> Int -> Maybe CubeCoord
+cubeCoord x y z | x + y + z == 0 = Just $ CubeCoord (x, y, z)
+                | otherwise      = Nothing
+
+ccToTuple :: CubeCoord -> (Int, Int, Int)
+ccToTuple (CubeCoord coords) = coords
+
+(+>) :: CubeCoord -> (Int, Int, Int) -> CubeCoord
+(CubeCoord (x, y, z)) +> (sx, sy, sz) = CubeCoord (x + sx, y + sy, z + sz)
+
+
 data Tile = Tile {tileCoords :: CubeCoord, tileCorners :: [Point], tileCenter :: Point } deriving (Show, Eq)
 makeLenses ''Tile
 
@@ -34,6 +48,31 @@ data GridArgs = GridArgs {gRadius :: Int, gPosition :: Point, gSize :: Int}
 
 getAxialCoords :: CubeCoord -> (Int, Int)
 getAxialCoords (CubeCoord (x, _y, z)) = (x, z)
+
+data Direction
+    = NorthEast
+    | NorthWest
+    | West
+    | SouthWest
+    | SouthEast
+    | East
+    deriving (Show, Eq, Enum, Bounded)
+
+directionShift :: Direction -> (Int, Int, Int)
+directionShift NorthEast = (1, 0, -1)
+directionShift NorthWest = (0, 1, -1)
+directionShift West      = (-1, 1, 0)
+directionShift SouthWest = (-1, 0, 1)
+directionShift SouthEast = (0, -1, 1)
+directionShift East      = (1, -1, 0)
+
+
+neighbours :: Tile -> [CubeCoord]
+neighbours (Tile { tileCoords = coords }) = do
+  direction <- [minBound .. maxBound] :: [Direction]
+
+  return $ coords +> directionShift direction
+
 
 --instance Show (Vector Point) where
 --  show v = Vector.foldl (\str p -> str ++ ", ") "[" v ++ "]"
@@ -61,7 +100,7 @@ hexagonGrid args@(GridArgs { gRadius = radius, gSize }) = Grid
     return $ CubeCoord (x, y, z)
   tiles = Map.fromList $ map
     (\coord@(CubeCoord (x, _, z)) ->
-      let cp = calcTileCorners args (x, z)
+      let cp = calcTilePosition args (x, z)
       in  ( coord
           , Tile { tileCoords  = coord
                  , tileCorners = makeHexagon cp gSize
@@ -71,19 +110,16 @@ hexagonGrid args@(GridArgs { gRadius = radius, gSize }) = Grid
     )
     coords
 
-calcTileCorners :: GridArgs -> (Int, Int) -> Point
-calcTileCorners (GridArgs { gSize = size, gPosition }) (x, y) =
+calcTilePosition :: GridArgs -> (Int, Int) -> Point
+calcTilePosition (GridArgs { gSize = size, gPosition }) (q, r) =
   (p px py <+> gPosition)
  where
   lineWidth = 0
-  xOffset   = sqrt 3 * fromIntegral size :: Float
-  yOffset   = 1.5 * fromIntegral size :: Float
-  py = round $ fromIntegral x + yOffset * fromIntegral y - 2 * lineWidth :: Int
+  py        = round $ fromIntegral (size * r) * 3 / 2 - 2 * lineWidth :: Int
   px =
     ( round
-    $ fromIntegral x
-    + xOffset
-    * (fromIntegral x + 0.5 * fromIntegral (y `rem` 2 :: Int))
+    $ fromIntegral size
+    * (sqrt 3 * fromIntegral q + sqrt 3 / 2 * fromIntegral r)
     - 2
     * lineWidth
     ) :: Int

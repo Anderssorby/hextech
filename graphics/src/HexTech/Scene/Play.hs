@@ -1,6 +1,6 @@
 module HexTech.Scene.Play where
 
---import qualified Animate
+import qualified Animate
 import qualified Data.Map.Strict               as Map
 import           Control.Monad                  ( when
                                                 --, foldM
@@ -31,6 +31,7 @@ import           HexTech.Engine.Audio           ( Audio(..) )
 import qualified HexTech.Engine.Types          as T
 import           HexTech.Engine.Types           ( Logger(..)
                                                 , Clock(..)
+                                                , Point(..)
                                                 , frameDeltaSeconds
                                                 , secondsToInteger
                                                 )
@@ -42,11 +43,12 @@ import           HexTech.Resource               ( Resources(..)
                                                 )
 import           HexTech.Engine.Renderer        ( Renderer(..)
                                                 , drawBlackOverlay
-                                                , drawCommander
                                                 , drawTextureSprite
                                                 , drawDigits
                                                 , drawLines
+                                                , drawSprite
                                                 , toSDLPoint
+                                                , getSpriteAnimations
                                                 --, gridToPixels
                                                 , Color(..)
                                                 , setColor
@@ -55,7 +57,14 @@ import           HexTech.Engine.Renderer        ( Renderer(..)
                                                 )
 import           HexTech.Camera                 ( CameraControl(..) )
 import           HexTech.Wrapper.SDLRenderer    ( SDLRenderer(..) )
-import           HexTech.Game                   ( HasGame(..) )
+import           HexTech.Game                   ( HasGame(..)
+                                                , Player(..)
+                                                , Piece(..)
+                                                , ResourceType(..)
+                                                , playerPieces
+                                                , playerName
+                                                , piecePosition
+                                                )
 import           HexTech.Grid                   ( Grid(..)
                                                 , Tile(..)
                                                 , CubeCoord(..)
@@ -142,11 +151,24 @@ drawPlay
      )
   => m ()
 drawPlay = do
-  pv   <- gets (view playVars)
-  grid <- gets $ view (game . gameGrid)
+  pv <- gets (view playVars)
   disableZoom
+  grid <- gets $ view (game . gameGrid)
   drawGrid grid
-  drawControlsText (50, 470)
+  players <- gets $ view (game . gamePlayers)
+  let tilePos pos =
+        maybe (T.p 450 450) tileCenter $ Map.lookup pos (gridTiles grid)
+  mapM_
+    (\player -> mapM_
+      (\piece -> do
+        let piecePoint = tilePos $ view piecePosition piece
+        drawPiece piece piecePoint
+      )
+      (view playerPieces player)
+    )
+    players
+
+  drawControlsText (10, 470)
   drawDigits (secondsToInteger $ pvSeconds pv) (T.p 50 50)
   muted <- gets $ view (settings . sMuted)
   let muteSprite | muted     = (rMuted . cResources)
@@ -155,11 +177,23 @@ drawPlay = do
   drawTextureSprite muteSprite (1000, 50)
   enableZoom
 
+drawPiece :: (Renderer m) => Piece -> Point -> m ()
+drawPiece piece point = do
+
+  drawCommander Commander'Idle point
+
+
+drawCommander :: Renderer m => CommanderKey -> Point -> m ()
+drawCommander key (Point pos) = do
+  animations <- getSpriteAnimations (rCommanderSprites . cResources)
+  let aniLoc = Animate.currentLocation animations (Animate.initPosition key)
+  drawSprite (rCommanderSprites . cResources) aniLoc pos
+
+
 drawGrid :: (HasSettings s, MonadState s m, Renderer m) => Grid -> m ()
 drawGrid grid = do
   let tiles = gridTiles grid
   mapM_ drawTile $ Map.elems tiles
-  drawCommander Commander'Idle (300, 300)
 
 drawTile :: (HasSettings s, MonadState s m, Renderer m) => Tile -> m ()
 drawTile tile = do

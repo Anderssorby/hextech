@@ -18,7 +18,6 @@ import           HexTech.Config                 ( Config(..) )
 import           HexTech.Resource               ( toDigitReverse
                                                 , Digit(..)
                                                 , Resources(..)
-                                                , CommanderKey
                                                 )
 import           HexTech.Engine.Types
 import           HexTech.Wrapper.SDLRenderer    ( SDLRenderer(..) )
@@ -251,12 +250,6 @@ drawDigits int (Point (x, y)) = mapM_
 --  then dist' + 1280
 --  else dist'
 --  where dist' = dist + speed
-
-drawCommander :: Renderer m => CommanderKey -> (Int, Int) -> m ()
-drawCommander key pos = do
-  animations <- getSpriteAnimations (rCommanderSprites . cResources)
-  let aniLoc = Animate.currentLocation animations (Animate.initPosition key)
-  drawSprite (rCommanderSprites . cResources) aniLoc pos
 
 drawJungle :: Renderer m => (Int, Int) -> m ()
 drawJungle = drawHorizontalScrollImage (rJungleSprites . cResources) 8

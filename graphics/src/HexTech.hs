@@ -179,6 +179,7 @@ pauseToPlay = raiseGameMusic
 playToPause :: Audio m => m ()
 playToPause = lowerGameMusic
 
+-- TODO remove unnecessary instances
 instance Audio HexTech where
   playGameMusic  = playGameMusic'
   stopGameMusic  = stopGameMusic'

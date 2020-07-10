@@ -5,6 +5,7 @@ dependencies:
 
 - base >=4.9.1.0 && <5
 - relude ^>= 0.6.0.0
+#- rapid
 - time
 - extra
 - template-haskell

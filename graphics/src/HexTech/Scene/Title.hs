@@ -16,6 +16,7 @@ import           HexTech.Config                 ( Config(..) )
 --import           HexTech.Engine.Common
 import           HexTech.Engine.Renderer        ( Renderer )
 import qualified HexTech.Engine.Renderer       as Renderer
+import qualified HexTech.Input                 as Input
 import           HexTech.Input                  ( HasInput(..)
                                                 , iSpace
                                                 )
@@ -53,7 +54,9 @@ titleStep
   => m ()
 titleStep = do
   input <- getInput
-  when (ksStatus (iSpace input) == KeyStatus'Pressed) (toScene Scene'Play)
+  when (ksStatus (Input.iSpace input) == KeyStatus'Pressed) (toScene Scene'Play)
+  when (ksStatus (Input.iEscape input) == KeyStatus'Pressed)
+       (toScene Scene'Quit)
   updateTitle
   drawTitle
 

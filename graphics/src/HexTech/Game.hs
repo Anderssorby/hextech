@@ -3,13 +3,18 @@ module HexTech.Game
   ( twoPlayersGame
   , Action(..)
   , Player(..)
-  , player
+  , playerName
+  , playerPieces
+  , playerResources
   , Game
-  , Piece
-  , Resource(..)
-  , PieceType
-  , movePiece
+  , Piece(..)
+  , piecePosition
   , pieceStrength
+  , pieceType
+  , Resource(..)
+  , ResourceType(..)
+  , PieceType(..)
+  --, movePiece
   --, runGame
   --, runRound
   , HasGame(..)
@@ -19,6 +24,7 @@ where
 import           HexTech.Grid                   ( Grid(..)
                                                 , GridArgs(..)
                                                 , CubeCoord(..)
+                                                , cubeCoord
                                                 , hexagonGrid
                                                 )
 import qualified HexTech.Engine.Types          as T
@@ -40,32 +46,31 @@ pieceStrength Drone     = 1
 pieceStrength Tower     = 3
 pieceStrength FastDrone = 1
 
-data ResourceType = Plus | Star deriving (Show, Eq)
+data ResourceType = Plus | Star deriving (Show, Eq, Enum, Ord)
 
 type GridPosition = CubeCoord
 
 data Resource = FreeResource ResourceType GridPosition deriving (Show, Eq)
 
 data Piece = Piece
-    {
-    --piecePosition :: GridPosition
-     pieceType :: PieceType
+    { _piecePosition :: GridPosition
+    , _pieceType :: PieceType
     } deriving (Show, Eq, Ord)
 
 makeLenses ''Piece
 
 data Player = Player
-    { playerName :: String
-    --, playerPieces :: [Piece]
-    --, playerResources :: [ResourceType]
-    } deriving (Show, Eq, Ord)
+    { _playerName :: String
+    , _playerPieces :: [Piece]
+    , _playerResources :: [ResourceType]
+    } deriving (Show, Eq)
 
-makeClassy_ ''Player
+makeLenses ''Player
 
 data Game = Game
       { _gamePlayers :: [Player]
-      , _playerPieces :: Map Player [Piece]
-      , _piecePositions :: Map Piece GridPosition
+      --, _playerPieces :: Map Player [Piece]
+      --, _piecePositions :: Map Piece GridPosition
       --, playerResources :: Map Player [ResourceType]
       --, playerNames :: Map Player String
       , _freeResources :: [Resource]
@@ -75,15 +80,15 @@ data Game = Game
 
 makeClassy ''Game
 
-movePiece :: Piece -> GridPosition -> State Game ()
-movePiece piece pos = do
-  gameState <- get
-  put
-    (set piecePositions
-         (Map.insert piece pos $ view piecePositions gameState)
-         gameState
-    )
-  return ()
+--movePiece :: Piece -> GridPosition -> State Game ()
+--movePiece piece pos = do
+--  gameState <- get
+--  put
+--    (set piecePositions
+--         (Map.insert piece pos $ view piecePositions gameState)
+--         gameState
+--    )
+--  return ()
 
 data Action
     = Move GridPosition
@@ -93,25 +98,25 @@ data Action
     | Attack GridPosition
     deriving (Show, Eq)
 
+initPlayer :: String -> CubeCoord -> Player
+initPlayer name corner = Player
+  { _playerName = name
+  , _playerPieces = [Piece { _pieceType = Commander, _piecePosition = corner }]
+  , _playerResources = []
+  }
+
+
 twoPlayersGame :: Game
 twoPlayersGame =
 
-  let anders      = Player { playerName = "Anders" }
-      antoine     = Player { playerName = "Antoine" }
-      leaderPiece = Piece { pieceType = Commander }
-      players     = [anders, antoine]
-      gridArgs = GridArgs { gRadius = 5, gSize = 50, gPosition = T.p 550 450 }
-  in  Game
-        { _gamePlayers    = players
-        , _playerPieces   = Map.fromList
-                              [(anders, [leaderPiece]), (antoine, [leaderPiece])]
-        , _piecePositions = Map.fromList
-                              [ (leaderPiece, CubeCoord (1, 0, 0))
-                              , (leaderPiece, CubeCoord (2, 3, 1))
-                              ]
-        , _freeResources  = []
-        , _gameGrid       = hexagonGrid gridArgs
-        }
+  let anders   = initPlayer "Anders" $ CubeCoord (5, 0, -5)
+      antoine  = initPlayer "Antoine" $ CubeCoord (-5, 0, 5)
+      players  = [anders, antoine]
+      gridArgs = GridArgs { gRadius = 5, gSize = 50, gPosition = T.p 600 450 }
+  in  Game { _gamePlayers   = players
+           , _freeResources = []
+           , _gameGrid      = hexagonGrid gridArgs
+           }
 
 --executePlayerAction :: Player -> Action -> State Game ()
 --executePlayerAction player (Move position) = return ()
