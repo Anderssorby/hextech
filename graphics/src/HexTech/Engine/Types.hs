@@ -1,6 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 module HexTech.Engine.Types where
-import           Relude
+--import           Relude
 import qualified Animate
 import           Data.Text
 
@@ -8,7 +7,7 @@ import           Data.Aeson                     ( FromJSON
                                                 , ToJSON
                                                 )
 
---import           Control.Monad.IO.Class         ( MonadIO )
+import           Control.Monad.IO.Class         ( MonadIO(..) )
 
 import           Data.Time.Clock.System         ( getSystemTime
                                                 , systemSeconds

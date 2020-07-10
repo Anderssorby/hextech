@@ -57,6 +57,9 @@ data Resources = Resources
   , rTitleSprite :: SDL.Texture
   , rDigitSprites :: Digit -> SDL.Texture
   , rControlsSprite :: SDL.Texture
+  , rSmallFont ::Font.Font
+  , rBigFont ::Font.Font
+  , rTitleFont ::Font.Font
   }
 
 -- | Produce a new 'SDL.Surface' based on an existing one, but
@@ -163,9 +166,6 @@ loadResources renderer = do
   --rockSprites <-
   --  Animate.readSpriteSheetJSON loadTexture "resource/rock.json" :: IO
   --    (Animate.SpriteSheet RockKey SDL.Texture Seconds)
-  Font.free smallFont
-  Font.free bigFont
-  Font.free titleFont
   return Resources { rJungleSprites    = jungle
                    , rGroundSprites    = ground
                    , rCommanderSprites = dinoSprites
@@ -180,6 +180,9 @@ loadResources renderer = do
                    , rTitleSprite      = titleSprite
                    , rDigitSprites     = digitSprites
                    , rControlsSprite   = controlsSprite
+                   , rSmallFont        = smallFont
+                   , rBigFont          = bigFont
+                   , rTitleFont        = titleFont
                    }
  where
   toTexture surface = SDL.createTextureFromSurface renderer surface
@@ -196,6 +199,9 @@ freeResources r = do
   --SDL.destroyTexture $ Animate.ssImage (rBirdSprites r)
   --SDL.destroyTexture $ Animate.ssImage (rLavaSprites r)
   --SDL.destroyTexture $ Animate.ssImage (rRockSprites r)
+  Font.free (rSmallFont r)
+  Font.free (rBigFont r)
+  Font.free (rTitleFont r)
   SDL.destroyTexture (rPauseSprite r)
   SDL.destroyTexture (rEscapeSprite r)
   SDL.destroyTexture (rSpaceSprite r)

@@ -21,6 +21,7 @@ module HexTech.Game
   )
 where
 
+import           Data.Text
 import           HexTech.Grid                   ( Grid(..)
                                                 , GridArgs(..)
                                                 , CubeCoord(..)
@@ -60,7 +61,7 @@ data Piece = Piece
 makeLenses ''Piece
 
 data Player = Player
-    { _playerName :: String
+    { _playerName :: Text
     , _playerPieces :: [Piece]
     , _playerResources :: [ResourceType]
     } deriving (Show, Eq)
@@ -98,7 +99,7 @@ data Action
     | Attack GridPosition
     deriving (Show, Eq)
 
-initPlayer :: String -> CubeCoord -> Player
+initPlayer :: Text -> CubeCoord -> Player
 initPlayer name corner = Player
   { _playerName = name
   , _playerPieces = [Piece { _pieceType = Commander, _piecePosition = corner }]

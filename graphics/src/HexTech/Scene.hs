@@ -1,9 +1,9 @@
 module HexTech.Scene where
 
-import           Control.Monad.State            ( MonadState )
-import           HexTech.Engine.Audio           ( Audio )
-import           HexTech.Engine.Types           ( Logger )
-import           HexTech.Engine.Renderer        ( Renderer )
+--import           Control.Monad.State            ( MonadState )
+--import           HexTech.Engine.Audio           ( Audio )
+--import           HexTech.Engine.Types           ( Logger )
+--import           HexTech.Engine.Renderer        ( Renderer )
 
 
 data SceneType

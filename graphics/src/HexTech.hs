@@ -3,12 +3,13 @@ module HexTech
   )
 where
 
+--import           Prelude                 hiding ( StateT(..) )
 import           Control.Lens
 import           Control.Exception.Safe         ( MonadThrow
                                                 , MonadCatch
                                                 )
 import           Control.Concurrent             ( threadDelay )
-import           Control.Monad.State
+import           Control.Monad.State.Strict
 import           Control.Monad.Reader
 import qualified SDL
 import qualified SDL.Mixer                     as Mixer

@@ -47,6 +47,7 @@ import           HexTech.Engine.Renderer        ( Renderer(..)
                                                 , drawDigits
                                                 , drawLines
                                                 , drawSprite
+                                                , drawText
                                                 , toSDLPoint
                                                 , getSpriteAnimations
                                                 --, gridToPixels
@@ -159,14 +160,18 @@ drawPlay = do
   let tilePos pos =
         maybe (T.p 450 450) tileCenter $ Map.lookup pos (gridTiles grid)
   mapM_
-    (\player -> mapM_
-      (\piece -> do
-        let piecePoint = tilePos $ view piecePosition piece
-        drawPiece piece piecePoint
-      )
-      (view playerPieces player)
+    (\(i, player) -> do
+      let name = player ^. playerName
+      drawText name (T.p 50 (100 + 28 * i))
+
+      mapM_
+        (\piece -> do
+          let piecePoint = tilePos $ view piecePosition piece
+          drawPiece piece piecePoint
+        )
+        (view playerPieces player)
     )
-    players
+    (zip [0 ..] players)
 
   drawControlsText (10, 470)
   drawDigits (secondsToInteger $ pvSeconds pv) (T.p 50 50)
@@ -178,9 +183,9 @@ drawPlay = do
   enableZoom
 
 drawPiece :: (Renderer m) => Piece -> Point -> m ()
-drawPiece piece point = do
+drawPiece _piece point = do
 
-  drawCommander Commander'Idle point
+  drawCommander Commander'Idle (T.p (-5) (-28) T.<+> point)
 
 
 drawCommander :: Renderer m => CommanderKey -> Point -> m ()
@@ -207,9 +212,9 @@ drawTile tile = do
 
   showCoords <- gets $ view (settings . sShowCoords)
   when showCoords $ do
-    drawDigits (fromIntegral x) (T.p (-25) (-10) T.<+> p)
-    drawDigits (fromIntegral y) (T.p (0) (-10) T.<+> p)
-    drawDigits (fromIntegral z) (T.p (25) (-10) T.<+> p)
+    drawDigits (fromIntegral x) (T.p (-25) (-28) T.<+> p)
+    drawDigits (fromIntegral y) (T.p (-5) (5) T.<+> p)
+    drawDigits (fromIntegral z) (T.p (25) (-28) T.<+> p)
 
 
 

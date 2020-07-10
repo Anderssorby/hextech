@@ -1,7 +1,9 @@
 module HexTech.Engine.Renderer where
 
+import           Data.Text                      ( Text )
 import qualified Animate
 import qualified SDL
+import qualified SDL.Font                      as Font
 import           Data.StateVar                  ( ($=) )
 import qualified Data.StateVar                 as StateVar
 import           Foreign.C.Types
@@ -109,12 +111,21 @@ drawTextureSprite getTex (x, y) = do
   tex      <- asks getTex
   SDL.TextureInfo { textureWidth, textureHeight } <- queryTexture tex
   let dim = V2 textureWidth textureHeight
-  drawTexture
-    renderer
-    tex
-    Nothing
-    (Just $ SDL.Rectangle (SDL.P $ SDL.V2 (fromIntegral x) (fromIntegral y)) dim
-    )
+  drawTexture renderer tex Nothing (Just $ SDL.Rectangle (mkPoint x y) dim)
+
+
+drawText :: (Renderer m) => Text -> Point -> m ()
+drawText text point = do
+  renderer <- asks cRenderer
+  font     <- asks (rSmallFont . cResources)
+  tex      <- do
+    surface <- Font.solid font (V4 255 255 255 255) text
+    SDL.createTextureFromSurface renderer surface
+
+  SDL.TextureInfo { textureWidth, textureHeight } <- queryTexture tex
+  let dim = V2 textureWidth textureHeight
+  drawTexture renderer tex Nothing (Just $ SDL.Rectangle (toSDLPoint point) dim)
+
 
 drawSprite
   :: (Renderer m)

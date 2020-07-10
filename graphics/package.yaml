@@ -1,5 +1,6 @@
 name:    hextech-graphics
-version: "0.1.0"
+version: "0.2.0"
+cabal-version: 3.2
 
 dependencies:
 
@@ -48,14 +49,25 @@ default-extensions:
 - OverloadedStrings
 - TemplateHaskell
 - MultiParamTypeClasses
+- ConstraintKinds
+- DeriveGeneric
+- RecordWildCards
+- StandaloneDeriving
+- TupleSections
+- TypeApplications
+- ViewPatterns
 - GADTs
 # The library contains all of our application code. The executable
 # defined below is just a thin wrapper.
 library:
   source-dirs: src
-  #mixins:
-  #- base hiding (Prelude)
-  #- relude (Relude as Prelude)
+  dependencies: 
+    base:
+        mixin:
+          - hiding (Prelude)
+    relude:
+      mixin:
+        - (Relude as Prelude)
 
 
 # Runnable executable for our application

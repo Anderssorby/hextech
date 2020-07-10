@@ -1,13 +1,13 @@
-cabal-version: 1.12
+cabal-version: 2.0
 
 -- This file has been generated from package.yaml by hpack version 0.34.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 188072ec2b47e2c5027523bc858161bb4ee82be20f407be755f1ae5af92b2abc
+-- hash: af51ed1785ba56ba10f7c357b6edb2bfb8222da05f7f67039345e2037d81bc14
 
 name:           hextech-graphics
-version:        0.1.0
+version:        0.2.0
 build-type:     Simple
 
 library
@@ -34,7 +34,7 @@ library
       Paths_hextech_graphics
   hs-source-dirs:
       src
-  default-extensions: DuplicateRecordFields FlexibleContexts FlexibleInstances GeneralizedNewtypeDeriving LambdaCase NamedFieldPuns ScopedTypeVariables OverloadedStrings TemplateHaskell MultiParamTypeClasses GADTs
+  default-extensions: DuplicateRecordFields FlexibleContexts FlexibleInstances GeneralizedNewtypeDeriving LambdaCase NamedFieldPuns ScopedTypeVariables OverloadedStrings TemplateHaskell MultiParamTypeClasses ConstraintKinds DeriveGeneric RecordWildCards StandaloneDeriving TupleSections TypeApplications ViewPatterns GADTs
   ghc-options: -Wall
   build-depends:
       StateVar
@@ -42,7 +42,7 @@ library
     , animate
     , ansi-terminal
     , array
-    , base >=4.9.1.0 && <5
+    , base
     , brittany
     , bytestring
     , containers
@@ -55,7 +55,7 @@ library
     , monad-logger >=0.3 && <0.4
     , mtl
     , random
-    , relude >=0.6.0.0 && <0.7
+    , relude
     , safe
     , safe-exceptions
     , sdl2
@@ -68,6 +68,9 @@ library
     , text-conversions
     , time
     , vector
+  mixins:
+      base hiding (Prelude)
+    , relude (Relude as Prelude)
   default-language: Haskell2010
 
 executable hextech-graphics
@@ -93,7 +96,7 @@ executable hextech-graphics
       Paths_hextech_graphics
   hs-source-dirs:
       src
-  default-extensions: DuplicateRecordFields FlexibleContexts FlexibleInstances GeneralizedNewtypeDeriving LambdaCase NamedFieldPuns ScopedTypeVariables OverloadedStrings TemplateHaskell MultiParamTypeClasses GADTs
+  default-extensions: DuplicateRecordFields FlexibleContexts FlexibleInstances GeneralizedNewtypeDeriving LambdaCase NamedFieldPuns ScopedTypeVariables OverloadedStrings TemplateHaskell MultiParamTypeClasses ConstraintKinds DeriveGeneric RecordWildCards StandaloneDeriving TupleSections TypeApplications ViewPatterns GADTs
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       StateVar
@@ -137,7 +140,7 @@ test-suite hextech-graphics-test
       Paths_hextech_graphics
   hs-source-dirs:
       test
-  default-extensions: DuplicateRecordFields FlexibleContexts FlexibleInstances GeneralizedNewtypeDeriving LambdaCase NamedFieldPuns ScopedTypeVariables OverloadedStrings TemplateHaskell MultiParamTypeClasses GADTs
+  default-extensions: DuplicateRecordFields FlexibleContexts FlexibleInstances GeneralizedNewtypeDeriving LambdaCase NamedFieldPuns ScopedTypeVariables OverloadedStrings TemplateHaskell MultiParamTypeClasses ConstraintKinds DeriveGeneric RecordWildCards StandaloneDeriving TupleSections TypeApplications ViewPatterns GADTs
   ghc-options: -Wall -Wall
   build-depends:
       StateVar
