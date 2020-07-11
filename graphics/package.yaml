@@ -1,11 +1,10 @@
 name:    hextech-graphics
 version: "0.2.0"
-cabal-version: 3.2
 
 dependencies:
-
 - base >=4.9.1.0 && <5
 - relude ^>= 0.6.0.0
+#- require
 #- rapid
 - time
 - extra
@@ -37,7 +36,8 @@ dependencies:
 # Dev
 - hlint
 - brittany
-ghc-options: -Wall
+#- importify
+ghc-options: -Wall #-F -pgmF requirepp
 default-extensions:
 - DuplicateRecordFields
 - FlexibleContexts
@@ -57,6 +57,7 @@ default-extensions:
 - TypeApplications
 - ViewPatterns
 - GADTs
+#- CPP
 # The library contains all of our application code. The executable
 # defined below is just a thin wrapper.
 library:
@@ -68,6 +69,9 @@ library:
     relude:
       mixin:
         - (Relude as Prelude)
+    flow:
+      mixin:
+        - (Flow)
 
 
 # Runnable executable for our application

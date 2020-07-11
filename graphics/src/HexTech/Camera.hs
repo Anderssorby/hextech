@@ -6,6 +6,10 @@ import           Control.Lens                   ( makeClassy )
 import qualified SDL
 import           Control.Monad.IO.Class         ( MonadIO(..) )
 import           Data.StateVar                  ( ($=) )
+import           HexTech.Config                 ( screenHeight
+                                                , screenWidth
+                                                , screenV2
+                                                )
 
 
 data Camera = Camera
@@ -30,13 +34,6 @@ class Monad m => CameraControl m where
   adjustCamera :: Camera -> m ()
   disableZoom :: m ()
   enableZoom :: m ()
-
-screenWidth, screenHeight :: Float
-screenWidth = 1280
-screenHeight = 720
-
-screenV2 :: V2 Float
-screenV2 = V2 screenWidth screenHeight
 
 initCamera :: Camera
 initCamera = Camera (V2 (screenWidth / 2) (screenHeight / 2)) (V2 1 1)

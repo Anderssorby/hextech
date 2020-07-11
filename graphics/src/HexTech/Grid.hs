@@ -1,9 +1,12 @@
 module HexTech.Grid
   ( Grid(..)
+  , gTiles
   , GridArgs(..)
   , Tile(..)
   , AxialCoord(..)
   , CubeCoord(..)
+  , Direction(..)
+  , directionShift
   , cubeCoord
   , (+>)
   , ccToTuple
@@ -11,6 +14,7 @@ module HexTech.Grid
   , hexagonGrid
   , toCubeCoord
   , toAxialCoords
+  , neighbours
   )
 where
 
@@ -42,7 +46,7 @@ makeLenses ''Tile
 
 
 data Grid = Grid {gridTiles :: Map.Map CubeCoord Tile} deriving (Show, Eq)
-makeLenses ''Grid
+makeLensesFor [("gridTiles", "gTiles")] ''Grid
 
 data GridArgs = GridArgs {gRadius :: Int, gPosition :: Point, gSize :: Int}
 
@@ -114,7 +118,7 @@ calcTilePosition :: GridArgs -> (Int, Int) -> Point
 calcTilePosition (GridArgs { gSize = size, gPosition }) (q, r) =
   (p px py <+> gPosition)
  where
-  lineWidth = 0
+  lineWidth = 1
   py        = round $ fromIntegral (size * r) * 3 / 2 - 2 * lineWidth :: Int
   px =
     ( round

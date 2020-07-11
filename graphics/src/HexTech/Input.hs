@@ -13,6 +13,8 @@ data Input = Input
   { iSpace :: KeyState Int
   , iUp :: KeyState Int
   , iDown :: KeyState Int
+  , iLeft :: KeyState Int
+  , iRight :: KeyState Int
   , iEscape :: KeyState Int
   , iQuit :: Bool
   , iMute :: KeyState Int
@@ -23,10 +25,13 @@ initInput :: Input
 initInput = Input { iSpace      = initKeyState
                   , iUp         = initKeyState
                   , iDown       = initKeyState
+                  , iLeft       = initKeyState
+                  , iRight      = initKeyState
                   , iEscape     = initKeyState
                   , iQuit       = False
                   , iMute       = initKeyState
                   , iShowCoords = initKeyState
+                  --, iMouseMove  =
                   }
 
 {-| This class describes type implementations that can handle user input and record it in a Monad
@@ -44,15 +49,18 @@ updateInput' = do
   setInput (stepControl events input)
 
 stepControl :: [SDL.EventPayload] -> Input -> Input
-stepControl events Input { iSpace, iUp, iDown, iEscape, iMute, iShowCoords } =
-  Input { iSpace      = next 1 [SDL.KeycodeSpace, SDL.KeycodeP] iSpace
-        , iUp         = next 1 [SDL.KeycodeUp, SDL.KeycodeW] iUp
-        , iDown       = next 1 [SDL.KeycodeDown, SDL.KeycodeS] iDown
-        , iEscape     = next 1 [SDL.KeycodeEscape, SDL.KeycodeQ] iEscape
-        , iMute       = next 1 [SDL.KeycodeM] iMute
-        , iShowCoords = next 1 [SDL.KeycodeN] iShowCoords
-        , iQuit       = elem SDL.QuitEvent events
-        }
+stepControl events Input { iSpace, iUp, iDown, iEscape, iMute, iShowCoords, iLeft, iRight }
+  = Input { iSpace      = next 1 [SDL.KeycodeSpace, SDL.KeycodeP] iSpace
+          , iUp         = next 1 [SDL.KeycodeUp, SDL.KeycodeW] iUp
+          , iDown       = next 1 [SDL.KeycodeDown, SDL.KeycodeS] iDown
+          , iLeft       = next 1 [SDL.KeycodeLeft, SDL.KeycodeA] iLeft
+          , iRight      = next 1 [SDL.KeycodeRight, SDL.KeycodeD] iRight
+          , iEscape     = next 1 [SDL.KeycodeEscape, SDL.KeycodeQ] iEscape
+          , iMute       = next 1 [SDL.KeycodeM] iMute
+          , iShowCoords = next 1 [SDL.KeycodeN] iShowCoords
+          --, iMouseMove = next 1 [SDL.MouseMotionEvent] iMouseMove
+          , iQuit       = elem SDL.QuitEvent events
+          }
  where
   next count keycodes keystate | or $ map pressed keycodes = pressedKeyState
                                | or $ map released keycodes = releasedKeyState

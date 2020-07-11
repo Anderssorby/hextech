@@ -39,6 +39,48 @@ packages:
       sha256: e78f88b47e3efc0b9e7769669f2c20d804c62fe80b061f5896872ea45dad7719
   original:
     hackage: key-state-0.1.0
+- completed:
+    hackage: require-0.4.9@sha256:a07c8a6d9c198d6c0d5492ee71790623a6ad79b70bbb75a77fe1a771c60c51af,3754
+    pantry-tree:
+      size: 1046
+      sha256: 9d8073dc7ae5f69b382e14e4309d9a3e407042be2158e9c3b8a2945748771686
+  original:
+    hackage: require-0.4.9
+- completed:
+    hackage: hse-cpp-0.2@sha256:90077df18787d193ac882837f39adc1912fa925455f6dfbe5ef3f880e5383f34,717
+    pantry-tree:
+      size: 219
+      sha256: bc19b91eef1348a3828283be049189a4811706820a728c7acbb7c9d6670de42e
+  original:
+    hackage: hse-cpp-0.2
+- completed:
+    hackage: log-warper-1.9.0@sha256:2dfad10f2a2894b2d6b429e918be0666951b565694aca110052616371780fa95,6910
+    pantry-tree:
+      size: 2130
+      sha256: c019f13e71e90a8597920383bc4a4db7bd243f1ae081f59a1fe1a34d4abaec71
+  original:
+    hackage: log-warper-1.9.0
+- completed:
+    hackage: text-format-0.3.2@sha256:2a3fc17cf87120fcfdbca62a0da59759755549285841cdc1483081c35fb3d115,1814
+    pantry-tree:
+      size: 1029
+      sha256: 2db26ddb77184186e0d5b2b020bdfbeb044c168024767b1fa3691682ca618896
+  original:
+    hackage: text-format-0.3.2
+- completed:
+    hackage: generic-data-0.8.3.0@sha256:fef21320697370fa1fadc14f72ac3ad8092b021f5371b315be3c9f3bde44c274,3710
+    pantry-tree:
+      size: 2061
+      sha256: bac628a423a6f86675d062f513278285b2a370f8f4a350c65a880b7043b6fb86
+  original:
+    hackage: generic-data-0.8.3.0
+- completed:
+    hackage: validation-selective-0.0.0.0@sha256:2ac19379b98aa6db6285d4ff16bd47eab2421df2ca76141c570db740814ba832,3426
+    pantry-tree:
+      size: 564
+      sha256: 86a7dc23ff65ab2cc3318046f02be6412dd91ae09598089efb7be915fdbc1638
+  original:
+    hackage: validation-selective-0.0.0.0
 snapshots:
 - completed:
     size: 493124

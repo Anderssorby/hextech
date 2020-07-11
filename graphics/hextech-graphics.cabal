@@ -4,7 +4,7 @@ cabal-version: 2.0
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: af51ed1785ba56ba10f7c357b6edb2bfb8222da05f7f67039345e2037d81bc14
+-- hash: 8270e8f5ee63b99ed7d27dd91d51224c8d914f368252d8994388211e7c177758
 
 name:           hextech-graphics
 version:        0.2.0
@@ -70,6 +70,7 @@ library
     , vector
   mixins:
       base hiding (Prelude)
+    , flow (Flow)
     , relude (Relude as Prelude)
   default-language: Haskell2010
 

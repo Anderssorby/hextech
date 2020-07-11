@@ -13,8 +13,10 @@ import           Control.Monad.State            ( MonadState
 
 import           HexTech.Game                   ( Game
                                                 , HasGame(..)
+                                                , Player(..)
                                                 , twoPlayersGame
                                                 )
+import           HexTech.Grid                   ( Tile(..) )
 
 import           HexTech.Config                 ( Config(..) )
 import           HexTech.Scene                  ( SceneType(..) )
@@ -39,6 +41,8 @@ data PlayVars = PlayVars
   --, pvSpeed :: Percent
     pvSeconds :: Seconds
   , pvZoom :: Float
+  , pvSelectedTile :: Maybe Tile
+  , pvActivePlayer :: Maybe Player
   --, pvShowDino :: Bool
   --, pvDinoPos :: Animate.Position DinoKey Seconds
   --, pvMountainPos :: Animate.Position MountainKey Seconds
@@ -55,7 +59,11 @@ data PlayVars = PlayVars
 makeClassy_ ''PlayVars
 
 initPlayVars :: PlayVars
-initPlayVars = PlayVars { pvSeconds = 0, pvZoom = 1 }
+initPlayVars = PlayVars { pvSeconds      = 0
+                        , pvZoom         = 1
+                        , pvSelectedTile = Nothing
+                        , pvActivePlayer = Nothing
+                        }
   --, pvDinoState         = DinoState DinoAction'Move Nothing Nothing Nothing
   --, pvDinoPos           = Animate.initPosition DinoKey'Move
   --, pvMountainPos       = Animate.initPosition MountainKey'Idle

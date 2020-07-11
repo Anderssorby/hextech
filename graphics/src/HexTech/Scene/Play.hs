@@ -15,6 +15,7 @@ import           Control.Monad.State            ( MonadState(..)
 import           Control.Monad.Reader           ( MonadReader )
 import           KeyState
 
+import qualified HexTech.Input                 as Input
 import           HexTech.Input                  ( HasInput(..)
                                                 , Input(..)
                                                 )
@@ -69,6 +70,10 @@ import           HexTech.Game                   ( HasGame(..)
 import           HexTech.Grid                   ( Grid(..)
                                                 , Tile(..)
                                                 , CubeCoord(..)
+                                                , (+>)
+                                                , directionShift
+                                                , Direction(..)
+                                                , gTiles
                                                 )
 
 
@@ -134,11 +139,51 @@ updatePlay
   => m ()
 updatePlay = do
   updateSeconds
+  updateSelectedTile
   updateZoom
   updateCamera
   updateSettings
   --isDead <- getDead
   --when isDead (toScene Scene'Title)
+
+
+updateSelectedTile
+  :: ( HasPlayVars s
+     , HasSettings s
+     , HasGame s
+     , MonadState s m
+     , Logger m
+     , Clock m
+     , CameraControl m
+     , Renderer m
+     , HasInput m
+     , Audio m
+     --, AudioSfx m
+     , SceneManager m
+     )
+  => m ()
+updateSelectedTile = do
+  tiles <- use (game . gameGrid . gTiles)
+  input <- getInput
+  let up    = (ksStatus (Input.iUp input) == KeyStatus'Pressed)
+      down  = (ksStatus (Input.iDown input) == KeyStatus'Pressed)
+      left  = (ksStatus (Input.iLeft input) == KeyStatus'Pressed)
+      right = (ksStatus (Input.iRight input) == KeyStatus'Pressed)
+
+  mCurrentTile <- use (playVars . _pvSelectedTile)
+  let move dir = do
+        case mCurrentTile of
+          Just (Tile { tileCoords }) -> do
+            (playVars . _pvSelectedTile)
+              .= (Map.lookup (tileCoords +> directionShift dir) tiles)
+            logInfo mCurrentTile
+          Nothing ->
+            (playVars . _pvSelectedTile)
+              .= (Map.lookup (CubeCoord (0, 0, 0)) tiles)
+  when up $ move NorthEast
+  when down $ move SouthWest
+  when left $ move West
+  when right $ move East
 
 {-| Draw the game play view
 -}
@@ -154,9 +199,9 @@ drawPlay
 drawPlay = do
   pv <- gets (view playVars)
   disableZoom
-  grid <- gets $ view (game . gameGrid)
+  grid <- use (game . gameGrid)
   drawGrid grid
-  players <- gets $ view (game . gamePlayers)
+  players <- use (game . gamePlayers)
   let tilePos pos =
         maybe (T.p 450 450) tileCenter $ Map.lookup pos (gridTiles grid)
   mapM_
@@ -173,7 +218,7 @@ drawPlay = do
     )
     (zip [0 ..] players)
 
-  drawControlsText (10, 470)
+  drawControlsText (10, 710)
   drawDigits (secondsToInteger $ pvSeconds pv) (T.p 50 50)
   muted <- gets $ view (settings . sMuted)
   let muteSprite | muted     = (rMuted . cResources)
@@ -195,18 +240,23 @@ drawCommander key (Point pos) = do
   drawSprite (rCommanderSprites . cResources) aniLoc pos
 
 
-drawGrid :: (HasSettings s, MonadState s m, Renderer m) => Grid -> m ()
+drawGrid
+  :: (HasPlayVars s, HasSettings s, MonadState s m, Renderer m) => Grid -> m ()
 drawGrid grid = do
   let tiles = gridTiles grid
   mapM_ drawTile $ Map.elems tiles
 
-drawTile :: (HasSettings s, MonadState s m, Renderer m) => Tile -> m ()
+drawTile
+  :: (HasPlayVars s, HasSettings s, MonadState s m, Renderer m) => Tile -> m ()
 drawTile tile = do
+  mCurrentTile <- use (playVars . _pvSelectedTile)
   let points                = (map toSDLPoint . tileCorners) tile
       p                     = tileCenter tile
       (CubeCoord (x, y, z)) = tileCoords tile
   oldColor <- getColorV4
-  setColor Green
+  let color | maybe False (tile ==) mCurrentTile = Red
+            | otherwise                          = Green
+  setColor color
   drawLines $ Vector.fromList points
   setColorV4 oldColor
 
@@ -220,7 +270,7 @@ drawTile tile = do
 
 modifyPlayVars
   :: (MonadState s m, HasPlayVars s) => (PlayVars -> PlayVars) -> m ()
-modifyPlayVars f = modify $ playVars %~ f
+modifyPlayVars f = playVars %= f
 
 updateSeconds :: (MonadState s m, HasPlayVars s) => m ()
 updateSeconds =
@@ -260,6 +310,12 @@ updateShowCoords = do
   input <- getInput
   when (ksStatus (iShowCoords input) == KeyStatus'Pressed) $ do
     modifySettings (\s -> sShowCoords .~ (not $ s ^. sShowCoords) $ s)
+
+pauseToPlay :: Audio m => m ()
+pauseToPlay = raiseGameMusic
+
+playToPause :: Audio m => m ()
+playToPause = lowerGameMusic
 
 pauseStep
   :: ( MonadState Vars m

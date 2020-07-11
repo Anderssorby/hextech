@@ -35,7 +35,9 @@ import           HexTech.Engine.Audio           ( Audio(..)
 import           HexTech.Camera                 ( CameraControl(..)
                                                 , initCamera
                                                 )
-import           HexTech.Config                 ( Config(..) )
+import           HexTech.Config                 ( Config(..)
+                                                , screenV2
+                                                )
 import           HexTech.State                  ( Vars(..)
                                                 , initVars
                                                 , enableZoom'
@@ -56,6 +58,8 @@ import           HexTech.Scene.Title            ( HasTitleVars
 import           HexTech.Scene.Play             ( playTransition
                                                 , playStep
                                                 , pauseStep
+                                                , pauseToPlay
+                                                , playToPause
                                                 )
 import           HexTech.Resource               ( loadResources
                                                 , Resources(..)
@@ -94,7 +98,7 @@ main = do
   Mixer.openAudio Mixer.defaultAudio 256
   window <- SDL.createWindow
     "Hex Tech"
-    SDL.defaultWindow { SDL.windowInitialSize = SDL.V2 1280 920 }
+    SDL.defaultWindow { SDL.windowInitialSize = fmap truncate $ screenV2 }
   renderer  <- SDL.createRenderer window (-1) SDL.defaultRenderer
   resources <- loadResources renderer
   --mkObstacles <- streamOfObstacles <$> getStdGen
@@ -173,12 +177,6 @@ titleTransition = do
   stopGameMusic
   adjustCamera initCamera
   modify $ titleVars .~ initTitleVars
-
-pauseToPlay :: Audio m => m ()
-pauseToPlay = raiseGameMusic
-
-playToPause :: Audio m => m ()
-playToPause = lowerGameMusic
 
 -- TODO remove unnecessary instances
 instance Audio HexTech where
