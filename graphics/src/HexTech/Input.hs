@@ -16,6 +16,8 @@ data Input = Input
   , iLeft :: KeyState Int
   , iRight :: KeyState Int
   , iEscape :: KeyState Int
+  , iEnter :: KeyState Int
+  , iCtrl :: KeyState Int
   , iQuit :: Bool
   , iMute :: KeyState Int
   , iShowCoords :: KeyState Int
@@ -28,6 +30,8 @@ initInput = Input { iSpace      = initKeyState
                   , iLeft       = initKeyState
                   , iRight      = initKeyState
                   , iEscape     = initKeyState
+                  , iEnter      = initKeyState
+                  , iCtrl       = initKeyState
                   , iQuit       = False
                   , iMute       = initKeyState
                   , iShowCoords = initKeyState
@@ -49,13 +53,15 @@ updateInput' = do
   setInput (stepControl events input)
 
 stepControl :: [SDL.EventPayload] -> Input -> Input
-stepControl events Input { iSpace, iUp, iDown, iEscape, iMute, iShowCoords, iLeft, iRight }
+stepControl events Input { iSpace, iUp, iDown, iEscape, iEnter, iMute, iShowCoords, iLeft, iRight, iCtrl }
   = Input { iSpace      = next 1 [SDL.KeycodeSpace, SDL.KeycodeP] iSpace
           , iUp         = next 1 [SDL.KeycodeUp, SDL.KeycodeW] iUp
           , iDown       = next 1 [SDL.KeycodeDown, SDL.KeycodeS] iDown
           , iLeft       = next 1 [SDL.KeycodeLeft, SDL.KeycodeA] iLeft
           , iRight      = next 1 [SDL.KeycodeRight, SDL.KeycodeD] iRight
           , iEscape     = next 1 [SDL.KeycodeEscape, SDL.KeycodeQ] iEscape
+          , iEnter      = next 1 [SDL.KeycodeReturn] iEnter
+          , iCtrl       = next 1 [SDL.KeycodeLCtrl, SDL.KeycodeRCtrl] iCtrl
           , iMute       = next 1 [SDL.KeycodeM] iMute
           , iShowCoords = next 1 [SDL.KeycodeN] iShowCoords
           --, iMouseMove = next 1 [SDL.MouseMotionEvent] iMouseMove

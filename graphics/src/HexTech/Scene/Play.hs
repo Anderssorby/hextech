@@ -6,6 +6,8 @@ import           Control.Monad                  ( when
                                                 --, foldM
                                                 --, mapM_
                                                 )
+import qualified Data.List.NonEmpty            as NonEmpty
+import           Data.List.NonEmpty             ( NonEmpty(..) )
 import qualified Data.Vector.Storable          as Vector
 import           Control.Lens            hiding ( zoom )
 import           Control.Monad.State            ( MonadState(..)
@@ -59,10 +61,12 @@ import           HexTech.Engine.Renderer        ( Renderer(..)
                                                 )
 import           HexTech.Camera                 ( CameraControl(..) )
 import           HexTech.Wrapper.SDLRenderer    ( SDLRenderer(..) )
+import qualified HexTech.Game                  as Game
 import           HexTech.Game                   ( HasGame(..)
                                                 , Player(..)
                                                 , Piece(..)
                                                 , ResourceType(..)
+                                                , initPlayer
                                                 , playerPieces
                                                 , playerName
                                                 , piecePosition
@@ -82,7 +86,11 @@ import           HexTech.Grid                   ( Grid(..)
 playTransition
   :: (HasPlayVars s, HasSettings s, MonadState s m, Audio m, Logger m) => m ()
 playTransition = do
-  playVars .= State.initPlayVars
+  let game         = Game.twoPlayersGame
+      activePlayer = case game ^? (gamePlayers . ix 0) of
+        Just p  -> p
+        Nothing -> initPlayer "Empty" (CubeCoord (0, 0, 0))
+  playVars .= State.initPlayVars activePlayer
   --PlayVars { pvUpcomingObstacles } <- gets (view playVars)
   --modify $ playVars .~ (initPlayVars pvUpcomingObstacles)
   playGameMusic
@@ -112,9 +120,9 @@ playStep
 playStep = do
   input <- getInput
   let shallPause =
-        (  ksStatus (iSpace input)
+        (  ksStatus (Input.iSpace input)
         == KeyStatus'Pressed
-        || ksStatus (iEscape input)
+        || ksStatus (Input.iEscape input)
         == KeyStatus'Pressed
         )
   when shallPause (toScene Scene'Pause)
@@ -140,11 +148,43 @@ updatePlay
 updatePlay = do
   updateSeconds
   updateSelectedTile
+  updatePlayerAction
   updateZoom
   updateCamera
   updateSettings
   --isDead <- getDead
   --when isDead (toScene Scene'Title)
+
+updatePlayerAction
+  :: ( HasPlayVars s
+     , HasSettings s
+     , HasGame s
+     , MonadState s m
+     , Logger m
+     , Clock m
+     , CameraControl m
+     , Renderer m
+     , HasInput m
+     , Audio m
+     --, AudioSfx m
+     , SceneManager m
+     )
+  => m ()
+updatePlayerAction = do
+  tiles <- use (game . gameGrid . gTiles)
+  input <- getInput
+  let enter = ksStatus (Input.iEnter input) == KeyStatus'Pressed
+
+  mCurrentTile <- use (playVars . _pvSelectedTile)
+  let selectedCoord = case mCurrentTile of
+        Just (Tile { tileCoords }) -> tileCoords
+        Nothing                    -> CubeCoord (0, 0, 0)
+  mCurrentPlayer <- use (playVars . _pvActivePlayer)
+  when enter $ do
+    (game . gamePlayers . ix 0 . playerPieces . ix 0 . piecePosition)
+      .= selectedCoord
+    --v <- use (game . gamePlayers . ix 0 . playerPieces . ix 0 . piecePosition)
+    logInfo selectedCoord
 
 
 updateSelectedTile
@@ -169,6 +209,7 @@ updateSelectedTile = do
       down  = (ksStatus (Input.iDown input) == KeyStatus'Pressed)
       left  = (ksStatus (Input.iLeft input) == KeyStatus'Pressed)
       right = (ksStatus (Input.iRight input) == KeyStatus'Pressed)
+      ctrl  = (ksStatus (Input.iCtrl input) == KeyStatus'Held)
 
   mCurrentTile <- use (playVars . _pvSelectedTile)
   let move dir = do
@@ -176,12 +217,12 @@ updateSelectedTile = do
           Just (Tile { tileCoords }) -> do
             (playVars . _pvSelectedTile)
               .= (Map.lookup (tileCoords +> directionShift dir) tiles)
-            logInfo mCurrentTile
+            --logInfo mCurrentTile
           Nothing ->
             (playVars . _pvSelectedTile)
               .= (Map.lookup (CubeCoord (0, 0, 0)) tiles)
-  when up $ move NorthEast
-  when down $ move SouthWest
+  when up $ move (if ctrl then NorthWest else NorthEast)
+  when down $ move (if ctrl then SouthEast else SouthWest)
   when left $ move West
   when right $ move East
 
@@ -197,17 +238,24 @@ drawPlay
      )
   => m ()
 drawPlay = do
-  pv <- gets (view playVars)
+  pv <- use playVars
   disableZoom
   grid <- use (game . gameGrid)
   drawGrid grid
-  players <- use (game . gamePlayers)
+  players       <- use (game . gamePlayers)
+  mActivePlayer <- use (playVars . _pvActivePlayer)
   let tilePos pos =
         maybe (T.p 450 450) tileCenter $ Map.lookup pos (gridTiles grid)
   mapM_
     (\(i, player) -> do
-      let name = player ^. playerName
-      drawText name (T.p 50 (100 + 28 * i))
+      let
+        name   = player ^. playerName
+        active = maybe False
+                       (\p -> player ^. playerName == p ^. playerName)
+                       mActivePlayer
+        text =
+          T.showText (i + 1) <> ". " <> name <> (if active then " *" else "")
+      drawText text (T.p 50 (100 + 28 * i))
 
       mapM_
         (\piece -> do
@@ -216,7 +264,7 @@ drawPlay = do
         )
         (view playerPieces player)
     )
-    (zip [0 ..] players)
+    (NonEmpty.zip (0 :| [1 ..]) players)
 
   drawControlsText (10, 710)
   drawDigits (secondsToInteger $ pvSeconds pv) (T.p 50 50)
@@ -230,7 +278,7 @@ drawPlay = do
 drawPiece :: (Renderer m) => Piece -> Point -> m ()
 drawPiece _piece point = do
 
-  drawCommander Commander'Idle (T.p (-5) (-28) T.<+> point)
+  drawCommander Commander'Idle (T.p (-15) (-28) T.<+> point)
 
 
 drawCommander :: Renderer m => CommanderKey -> Point -> m ()

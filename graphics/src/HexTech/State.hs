@@ -14,9 +14,12 @@ import           Control.Monad.State            ( MonadState
 import           HexTech.Game                   ( Game
                                                 , HasGame(..)
                                                 , Player(..)
+                                                , initPlayer
                                                 , twoPlayersGame
                                                 )
-import           HexTech.Grid                   ( Tile(..) )
+import           HexTech.Grid                   ( Tile(..)
+                                                , CubeCoord(..)
+                                                )
 
 import           HexTech.Config                 ( Config(..) )
 import           HexTech.Scene                  ( SceneType(..) )
@@ -58,12 +61,12 @@ data PlayVars = PlayVars
 
 makeClassy_ ''PlayVars
 
-initPlayVars :: PlayVars
-initPlayVars = PlayVars { pvSeconds      = 0
-                        , pvZoom         = 1
-                        , pvSelectedTile = Nothing
-                        , pvActivePlayer = Nothing
-                        }
+initPlayVars :: Player -> PlayVars
+initPlayVars activePlayer = PlayVars { pvSeconds      = 0
+                                     , pvZoom         = 1
+                                     , pvSelectedTile = Nothing
+                                     , pvActivePlayer = Just activePlayer
+                                     }
   --, pvDinoState         = DinoState DinoAction'Move Nothing Nothing Nothing
   --, pvDinoPos           = Animate.initPosition DinoKey'Move
   --, pvMountainPos       = Animate.initPosition MountainKey'Idle
@@ -106,14 +109,21 @@ data Vars = Vars
 makeClassy_ ''Vars
 
 initVars :: Vars
-initVars = Vars twoPlayersGame
-                Scene'Title
-                Scene'Title
-                initTitleVars
-                initPlayVars
-                initInput
-                initCamera
-                initSettings
+initVars = Vars { vGame      = game
+                , vScene     = Scene'Title
+                , vNextScene = Scene'Title
+                , vTitle     = initTitleVars
+                -- TODO dont init until game start
+                , vPlay      = initPlayVars activePlayer
+                , vInput     = initInput
+                , vCamera    = initCamera
+                , vSettings  = initSettings
+                }
+ where
+  game         = twoPlayersGame
+  activePlayer = case game ^? (gamePlayers . ix 0) of
+    Just p  -> p
+    Nothing -> initPlayer "Empty" (CubeCoord (0, 0, 0))
 
 
 toScene' :: MonadState Vars m => SceneType -> m ()

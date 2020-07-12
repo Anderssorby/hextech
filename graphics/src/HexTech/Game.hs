@@ -3,6 +3,7 @@ module HexTech.Game
   ( twoPlayersGame
   , Action(..)
   , Player(..)
+  , initPlayer
   , playerName
   , playerPieces
   , playerResources
@@ -22,6 +23,8 @@ module HexTech.Game
 where
 
 import           Data.Text
+import qualified Data.List.NonEmpty            as NonEmpty
+import           Data.List.NonEmpty             ( NonEmpty(..) )
 import           HexTech.Grid                   ( Grid(..)
                                                 , GridArgs(..)
                                                 , CubeCoord(..)
@@ -65,11 +68,23 @@ data Player = Player
     , _playerPieces :: [Piece]
     , _playerResources :: [ResourceType]
     } deriving (Show, Eq)
-
 makeLenses ''Player
 
+initPlayer :: Text -> CubeCoord -> Player
+initPlayer name corner = Player
+  { _playerName = name
+  , _playerPieces = [Piece { _pieceType = Commander, _piecePosition = corner }]
+  , _playerResources = []
+  }
+
+--instance SemiGroup Player where
+--    p1 <> p2 =
+--
+--instance Monoid Player where
+--  mempty = initPlayer "Empty" (CubeCoord (0, 0, 0))
+
 data Game = Game
-      { _gamePlayers :: [Player]
+      { _gamePlayers :: NonEmpty Player
       --, _playerPieces :: Map Player [Piece]
       --, _piecePositions :: Map Piece GridPosition
       --, playerResources :: Map Player [ResourceType]
@@ -81,15 +96,15 @@ data Game = Game
 
 makeClassy ''Game
 
---movePiece :: Piece -> GridPosition -> State Game ()
+--movePiece :: Piece -> GridPosition -> Piece
 --movePiece piece pos = do
---  gameState <- get
---  put
---    (set piecePositions
---         (Map.insert piece pos $ view piecePositions gameState)
---         gameState
---    )
---  return ()
+  --gameState <- get
+  --put
+  --  (set piecePositions
+  --       (Map.insert piece pos $ view piecePositions gameState)
+  --       gameState
+  --  )
+  --return ()
 
 data Action
     = Move GridPosition
@@ -99,20 +114,13 @@ data Action
     | Attack GridPosition
     deriving (Show, Eq)
 
-initPlayer :: Text -> CubeCoord -> Player
-initPlayer name corner = Player
-  { _playerName = name
-  , _playerPieces = [Piece { _pieceType = Commander, _piecePosition = corner }]
-  , _playerResources = []
-  }
-
 
 twoPlayersGame :: Game
 twoPlayersGame =
 
   let anders   = initPlayer "Anders" $ CubeCoord (5, 0, -5)
       antoine  = initPlayer "Antoine" $ CubeCoord (-5, 0, 5)
-      players  = [anders, antoine]
+      players  = anders :| [antoine]
       gridArgs = GridArgs { gRadius = 5, gSize = 50, gPosition = T.p 600 450 }
   in  Game { _gamePlayers   = players
            , _freeResources = []
