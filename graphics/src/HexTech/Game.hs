@@ -13,6 +13,8 @@ module HexTech.Game
   , pieceStrength
   , pieceType
   , Resource(..)
+  , resType
+  , resPosition
   , ResourceType(..)
   , PieceType(..)
   --, movePiece
@@ -54,7 +56,11 @@ data ResourceType = Plus | Star deriving (Show, Eq, Enum, Ord)
 
 type GridPosition = CubeCoord
 
-data Resource = FreeResource ResourceType GridPosition deriving (Show, Eq)
+data Resource = Resource {_resType :: ResourceType, _resPosition :: GridPosition} deriving (Show, Eq)
+makeLenses ''Resource
+
+mkResource :: ResourceType -> CubeCoord -> Resource
+mkResource t pos = Resource { _resType = t, _resPosition = pos }
 
 data Piece = Piece
     { _piecePosition :: GridPosition
@@ -122,10 +128,18 @@ twoPlayersGame =
       antoine  = initPlayer "Antoine" $ CubeCoord (-5, 0, 5)
       players  = anders :| [antoine]
       gridArgs = GridArgs { gRadius = 5, gSize = 50, gPosition = T.p 600 450 }
-  in  Game { _gamePlayers   = players
-           , _freeResources = []
-           , _gameGrid      = hexagonGrid gridArgs
-           }
+  in  Game
+        { _gamePlayers   = players
+        , _freeResources = [ mkResource Star $ CubeCoord (0, 0, 0)
+                           , mkResource Plus $ CubeCoord (1, 0, -1)
+                           , mkResource Plus $ CubeCoord (-1, 0, 1)
+                           , mkResource Plus $ CubeCoord (1, -1, 0)
+                           , mkResource Plus $ CubeCoord (-1, 1, 0)
+                           , mkResource Plus $ CubeCoord (0, 1, -1)
+                           , mkResource Plus $ CubeCoord (0, -1, 1)
+                           ]
+        , _gameGrid      = hexagonGrid gridArgs
+        }
 
 --executePlayerAction :: Player -> Action -> State Game ()
 --executePlayerAction player (Move position) = return ()

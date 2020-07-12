@@ -32,6 +32,7 @@ import           HexTech.State                  ( Vars(..)
 import qualified HexTech.Engine.Audio          as Audio
 import           HexTech.Engine.Audio           ( Audio(..) )
 import qualified HexTech.Engine.Types          as T
+import           HexTech.Engine.Types           ( (<+>) )
 import           HexTech.Engine.Types           ( Logger(..)
                                                 , Clock(..)
                                                 , Point(..)
@@ -266,6 +267,19 @@ drawPlay = do
     )
     (NonEmpty.zip (0 :| [1 ..]) players)
 
+  resources <- use (game . freeResources)
+  mapM_
+    (\res -> do
+      let pos      = res ^. Game.resPosition
+          posPoint = tilePos pos
+          text     = case res ^. Game.resType of
+            Star -> "*"
+            Plus -> "+"
+
+      drawText text (posPoint <+> T.p (-12) (-10))
+    )
+    resources
+
   drawControlsText (10, 710)
   drawDigits (secondsToInteger $ pvSeconds pv) (T.p 50 50)
   muted <- gets $ view (settings . sMuted)
@@ -278,7 +292,7 @@ drawPlay = do
 drawPiece :: (Renderer m) => Piece -> Point -> m ()
 drawPiece _piece point = do
 
-  drawCommander Commander'Idle (T.p (-15) (-28) T.<+> point)
+  drawCommander Commander'Idle (T.p (-15) (-28) <+> point)
 
 
 drawCommander :: Renderer m => CommanderKey -> Point -> m ()
