@@ -184,7 +184,7 @@ updatePlayerAction = do
     (game . gamePlayers . ix 0 . playerPieces . ix 0 . piecePosition)
       .= selectedCoord
     --v <- use (game . gamePlayers . ix 0 . playerPieces . ix 0 . piecePosition)
-    logInfo selectedCoord
+    --logInfo selectedCoord
 
 
 updateSelectedTile
@@ -293,6 +293,8 @@ drawGrid
 drawGrid grid = do
   let tiles = gridTiles grid
   mapM_ drawTile $ Map.elems tiles
+  mCurrentTile <- use (playVars . _pvSelectedTile)
+  maybe (return ()) drawTile mCurrentTile
 
 drawTile
   :: (HasPlayVars s, HasSettings s, MonadState s m, Renderer m) => Tile -> m ()

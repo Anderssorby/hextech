@@ -87,7 +87,7 @@ data Settings = Settings
 makeClassy ''Settings
 
 initSettings :: Settings
-initSettings = Settings { _sMuted = False, _sShowCoords = True }
+initSettings = Settings { _sMuted = False, _sShowCoords = False }
 
 modifySettings
   :: (MonadState s m, HasSettings s) => (Settings -> Settings) -> m ()
