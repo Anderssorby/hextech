@@ -1,12 +1,20 @@
-module HexTech.Input where
+module HexTech.Input
+  ( module HexTech.Input
+  , SDL.MouseButton(..)
+  )
+where
 
 import qualified SDL
 import           KeyState
+import           Control.Monad.IO.Class         ( MonadIO(..) )
+import           Control.Lens
+import           Data.Maybe                     ( mapMaybe )
 
-import           HexTech.Wrapper.SDLInput       ( SDLInput(..)
-                                                , keycodeReleased
-                                                , keycodePressed
-                                                )
+import qualified HexTech.Engine.Types          as T
+--import           HexTech.Wrapper.SDLInput       ( SDLInput(..)
+--                                                , keycodeReleased
+--                                                , keycodePressed
+--                                                )
 
 
 data Input = Input
@@ -21,7 +29,11 @@ data Input = Input
   , iQuit :: Bool
   , iMute :: KeyState Int
   , iShowCoords :: KeyState Int
+  , iMouseClick :: [MouseEvent]
   } deriving (Show, Eq)
+
+data MouseEvent = MouseEvent {_mousePos :: T.Point, _mouseButton:: SDL.MouseButton } deriving (Show, Eq)
+makeLenses ''MouseEvent
 
 initInput :: Input
 initInput = Input { iSpace      = initKeyState
@@ -35,25 +47,51 @@ initInput = Input { iSpace      = initKeyState
                   , iQuit       = False
                   , iMute       = initKeyState
                   , iShowCoords = initKeyState
-                  --, iMouseMove  =
+                  , iMouseClick = []
                   }
+
+keycodePressed :: SDL.Keycode -> SDL.EventPayload -> Bool
+keycodePressed keycode event = case event of
+  SDL.KeyboardEvent SDL.KeyboardEventData { keyboardEventKeysym = SDL.Keysym { keysymKeycode = code }, keyboardEventKeyMotion = motion, keyboardEventRepeat }
+    -> code == keycode && motion == SDL.Pressed && not keyboardEventRepeat
+  _ -> False
+
+mouseButtonEvent :: SDL.EventPayload -> Maybe MouseEvent
+mouseButtonEvent event = case event of
+  SDL.MouseButtonEvent SDL.MouseButtonEventData { mouseButtonEventButton, mouseButtonEventPos }
+    -> Just $ MouseEvent { _mousePos    = T.toPoint mouseButtonEventPos
+                         , _mouseButton = mouseButtonEventButton
+                         }
+  _ -> Nothing
+
+keycodeReleased :: SDL.Keycode -> SDL.EventPayload -> Bool
+keycodeReleased keycode event = case event of
+  SDL.KeyboardEvent SDL.KeyboardEventData { keyboardEventKeysym = SDL.Keysym { keysymKeycode = code }, keyboardEventKeyMotion = motion, keyboardEventRepeat }
+    -> code == keycode && motion == SDL.Released && not keyboardEventRepeat
+  _ -> False
+--
+--class Monad m => SDLInput m where
+--  pollEventPayloads :: m [SDL.EventPayload]
+
+pollEventPayloads :: MonadIO m => m [SDL.EventPayload]
+pollEventPayloads = liftIO $ map SDL.eventPayload <$> SDL.pollEvents
 
 {-| This class describes type implementations that can handle user input and record it in a Monad
 -}
 
-class Monad m => HasInput m where
+class MonadIO m => HasInput m where
   updateInput :: m ()
   setInput :: Input -> m ()
   getInput :: m Input
 
-updateInput' :: (HasInput m, SDLInput m) => m ()
+updateInput' :: (HasInput m) => m ()
 updateInput' = do
   input  <- getInput
   events <- pollEventPayloads
   setInput (stepControl events input)
 
 stepControl :: [SDL.EventPayload] -> Input -> Input
-stepControl events Input { iSpace, iUp, iDown, iEscape, iEnter, iMute, iShowCoords, iLeft, iRight, iCtrl }
+stepControl events Input { iSpace, iUp, iDown, iEscape, iEnter, iMute, iShowCoords, iLeft, iRight, iCtrl, iMouseClick }
   = Input { iSpace      = next 1 [SDL.KeycodeSpace, SDL.KeycodeP] iSpace
           , iUp         = next 1 [SDL.KeycodeUp, SDL.KeycodeW] iUp
           , iDown       = next 1 [SDL.KeycodeDown, SDL.KeycodeS] iDown
@@ -64,7 +102,7 @@ stepControl events Input { iSpace, iUp, iDown, iEscape, iEnter, iMute, iShowCoor
           , iCtrl       = next 1 [SDL.KeycodeLCtrl, SDL.KeycodeRCtrl] iCtrl
           , iMute       = next 1 [SDL.KeycodeM] iMute
           , iShowCoords = next 1 [SDL.KeycodeN] iShowCoords
-          --, iMouseMove = next 1 [SDL.MouseMotionEvent] iMouseMove
+          , iMouseClick = mapMaybe mouseButtonEvent events
           , iQuit       = elem SDL.QuitEvent events
           }
  where

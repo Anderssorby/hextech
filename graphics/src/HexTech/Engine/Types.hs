@@ -1,6 +1,7 @@
 module HexTech.Engine.Types where
---import           Relude
+
 import qualified Animate
+import qualified SDL
 import           Data.Text
 
 import           Data.Aeson                     ( FromJSON
@@ -16,11 +17,32 @@ import           System.Console.ANSI
 
 newtype Point = Point (Int, Int) deriving (Show, Eq)
 
-p :: Int -> Int -> Point
-p x y = Point (x, y)
+--instance Num Point where
+--(Point (x1, y1)) * (Point (x2, y2)) = Point (x1 * x2, y1 * y2)
+negateP (Point (x, y)) = p (-x) (-y)
+  --abs (Point (x, y)) = sqrt $ fromIntegral x ^ 2 + fromIntegral y ^ 2
+--instance Functor Point where
+--  fmap f (Point (x, y)) = p (f x) (f y)
+
+p :: Integral a => a -> a -> Point
+p x y = Point (fromIntegral x, fromIntegral y)
 
 (<+>) :: Point -> Point -> Point
 (Point (x1, y1)) <+> (Point (x2, y2)) = Point (x1 + x2, y1 + y2)
+
+(<->) :: Point -> Point -> Point
+p1 <-> p2 = p1 <+> negateP p2
+
+type SDLPoint a = SDL.Point SDL.V2 a
+
+mkSDLPoint :: (Integral a, Integral b) => a -> a -> SDLPoint b
+mkSDLPoint x y = SDL.P $ SDL.V2 (fromIntegral x) (fromIntegral y)
+
+toSDLPoint :: Integral a => Point -> SDLPoint a
+toSDLPoint (Point (x, y)) = mkSDLPoint x y
+
+toPoint :: Integral a => SDLPoint a -> Point
+toPoint (SDL.P (SDL.V2 x y)) = p x y
 
 frameDeltaSeconds :: Fractional a => a
 frameDeltaSeconds = 0.016667

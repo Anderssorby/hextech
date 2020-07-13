@@ -21,3 +21,4 @@ cabal.sandbox.config
 \#*
 hextech-backend.cabal
 report.html
+hie-log

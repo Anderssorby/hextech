@@ -82,13 +82,13 @@ groundY = 16 * 28
 riverY = 16 * 36
 
 --
-type SDLPoint = SDL.Point SDL.V2 CInt
-
-mkPoint :: (Integral a, Integral b) => a -> a -> SDL.Point SDL.V2 b
-mkPoint x y = SDL.P $ SDL.V2 (fromIntegral x) (fromIntegral y)
-
-toSDLPoint :: Point -> SDLPoint
-toSDLPoint (Point (x, y)) = mkPoint x y
+--type SDLPoint = SDL.Point SDL.V2 CInt
+--
+--mkPoint :: (Integral a, Integral b) => a -> a -> SDL.Point SDL.V2 b
+--mkPoint x y = SDL.P $ SDL.V2 (fromIntegral x) (fromIntegral y)
+--
+--toSDLPoint :: Point -> SDLPoint
+--toSDLPoint (Point (x, y)) = mkPoint x y
 
 drawLine :: (Renderer m) => Point -> Point -> m ()
 drawLine p1 p2 = do
@@ -111,7 +111,7 @@ drawTextureSprite getTex (x, y) = do
   tex      <- asks getTex
   SDL.TextureInfo { textureWidth, textureHeight } <- queryTexture tex
   let dim = V2 textureWidth textureHeight
-  drawTexture renderer tex Nothing (Just $ SDL.Rectangle (mkPoint x y) dim)
+  drawTexture renderer tex Nothing (Just $ SDL.Rectangle (mkSDLPoint x y) dim)
 
 
 drawText :: (Renderer m) => Text -> Point -> m ()
@@ -237,7 +237,7 @@ drawBlackOverlay (Percent percent) = do
 
 rectFromClip :: Animate.SpriteClip key -> SDL.Rectangle CInt
 rectFromClip Animate.SpriteClip { scX, scY, scW, scH } = SDL.Rectangle
-  (mkPoint scX scY)
+  (mkSDLPoint scX scY)
   (V2 (num scW) (num scH))
   where num = fromIntegral
 

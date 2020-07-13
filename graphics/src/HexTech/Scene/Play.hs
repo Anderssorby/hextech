@@ -2,10 +2,7 @@ module HexTech.Scene.Play where
 
 import qualified Animate
 import qualified Data.Map.Strict               as Map
-import           Control.Monad                  ( when
-                                                --, foldM
-                                                --, mapM_
-                                                )
+import           Control.Monad                  ( when )
 import qualified Data.List.NonEmpty            as NonEmpty
 import           Data.List.NonEmpty             ( NonEmpty(..) )
 import qualified Data.Vector.Storable          as Vector
@@ -52,9 +49,7 @@ import           HexTech.Engine.Renderer        ( Renderer(..)
                                                 , drawLines
                                                 , drawSprite
                                                 , drawText
-                                                , toSDLPoint
                                                 , getSpriteAnimations
-                                                --, gridToPixels
                                                 , Color(..)
                                                 , setColor
                                                 , setColorV4
@@ -72,6 +67,7 @@ import           HexTech.Game                   ( HasGame(..)
                                                 , playerName
                                                 , piecePosition
                                                 )
+import qualified HexTech.Grid                  as Grid
 import           HexTech.Grid                   ( Grid(..)
                                                 , Tile(..)
                                                 , CubeCoord(..)
@@ -172,15 +168,32 @@ updatePlayerAction
      )
   => m ()
 updatePlayerAction = do
-  tiles <- use (game . gameGrid . gTiles)
-  input <- getInput
-  let enter = ksStatus (Input.iEnter input) == KeyStatus'Pressed
-
+  grid         <- use (game . gameGrid)
+  input        <- getInput
   mCurrentTile <- use (playVars . _pvSelectedTile)
   let selectedCoord = case mCurrentTile of
         Just (Tile { tileCoords }) -> tileCoords
         Nothing                    -> CubeCoord (0, 0, 0)
   mCurrentPlayer <- use (playVars . _pvActivePlayer)
+  --logInfo input
+
+  let mouseClicks = Input.iMouseClick input
+      enter       = ksStatus (Input.iEnter input) == KeyStatus'Pressed
+
+  case mouseClicks of
+    (mouseClick : _) -> do
+      let rightBut = (mouseClick ^. Input.mouseButton == Input.ButtonLeft)
+          mousePos = mouseClick ^. Input.mousePos
+      when rightBut $ do
+        --logInfo mouseClick
+        --logInfo mousePos
+        let mTile = Grid.pointToTile mousePos grid
+        case mTile of
+          Just tile -> playVars . _pvSelectedTile .= Just tile
+          Nothing   -> return ()
+
+    [] -> return ()
+
   when enter $ do
     (game . gamePlayers . ix 0 . playerPieces . ix 0 . piecePosition)
       .= selectedCoord
@@ -314,7 +327,7 @@ drawTile
   :: (HasPlayVars s, HasSettings s, MonadState s m, Renderer m) => Tile -> m ()
 drawTile tile = do
   mCurrentTile <- use (playVars . _pvSelectedTile)
-  let points                = (map toSDLPoint . tileCorners) tile
+  let points                = (map T.toSDLPoint . tileCorners) tile
       p                     = tileCenter tile
       (CubeCoord (x, y, z)) = tileCoords tile
   oldColor <- getColorV4

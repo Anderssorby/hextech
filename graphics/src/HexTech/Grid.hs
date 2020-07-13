@@ -15,6 +15,7 @@ module HexTech.Grid
   , toCubeCoord
   , toAxialCoords
   , neighbours
+  , pointToTile
   )
 where
 
@@ -24,6 +25,7 @@ import           Control.Lens
 import           HexTech.Engine.Types           ( Point(..)
                                                 , p
                                                 , (<+>)
+                                                , (<->)
                                                 )
 
 
@@ -45,10 +47,10 @@ data Tile = Tile {tileCoords :: CubeCoord, tileCorners :: [Point], tileCenter ::
 makeLenses ''Tile
 
 
-data Grid = Grid {gridTiles :: Map.Map CubeCoord Tile} deriving (Show, Eq)
-makeLensesFor [("gridTiles", "gTiles")] ''Grid
+data GridArgs = GridArgs {gRadius :: Int, gPosition :: Point, gSize :: Int} deriving (Show, Eq)
 
-data GridArgs = GridArgs {gRadius :: Int, gPosition :: Point, gSize :: Int}
+data Grid = Grid {gridTiles :: Map.Map CubeCoord Tile, gridArgs :: GridArgs} deriving (Show, Eq)
+makeLensesFor [("gridTiles", "gTiles"), ("gridArgs", "gArgs")] ''Grid
 
 getAxialCoords :: CubeCoord -> (Int, Int)
 getAxialCoords (CubeCoord (x, _y, z)) = (x, z)
@@ -78,6 +80,16 @@ neighbours (Tile { tileCoords = coords }) = do
   return $ coords +> directionShift direction
 
 
+pointToTile :: Point -> Grid -> Maybe Tile
+pointToTile point grid = grid ^. (gTiles . at (CubeCoord (q, (-q) - r, r)))
+ where
+  (Point (x, y)) = point <-> (gPosition $ grid ^. gArgs)
+  fi             = fromIntegral
+  size           = fromIntegral (gSize $ grid ^. gArgs) :: Float
+  q              = round $ (sqrt 3 / 3 * fi x - 1 / 3 * fi y) / size
+  r              = round $ (2 / 3 * fi y) / size
+
+
 --instance Show (Vector Point) where
 --  show v = Vector.foldl (\str p -> str ++ ", ") "[" v ++ "]"
 --
@@ -94,6 +106,7 @@ toCubeCoord (AxialCoord (q, r)) = CubeCoord (q, (-q) + (-r), r)
 hexagonGrid :: GridArgs -> Grid
 hexagonGrid args@(GridArgs { gRadius = radius, gSize }) = Grid
   { gridTiles = tiles
+  , gridArgs  = args
   }
  where
   coords = do
