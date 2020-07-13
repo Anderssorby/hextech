@@ -116,15 +116,16 @@ drawTextureSprite getTex (x, y) = do
 
 drawText :: (Renderer m) => Text -> Point -> m ()
 drawText text point = do
+  -- TODO this will leak 
   renderer <- asks cRenderer
   font     <- asks (rSmallFont . cResources)
-  tex      <- do
-    surface <- Font.solid font (V4 255 255 255 255) text
-    SDL.createTextureFromSurface renderer surface
+  surface  <- Font.solid font (V4 255 255 255 255) text
+  tex      <- SDL.createTextureFromSurface renderer surface
 
   SDL.TextureInfo { textureWidth, textureHeight } <- queryTexture tex
   let dim = V2 textureWidth textureHeight
   drawTexture renderer tex Nothing (Just $ SDL.Rectangle (toSDLPoint point) dim)
+  SDL.destroyTexture tex
 
 
 drawSprite

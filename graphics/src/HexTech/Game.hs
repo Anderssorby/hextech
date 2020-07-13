@@ -137,6 +137,26 @@ twoPlayersGame =
                            , mkResource Plus $ CubeCoord (-1, 1, 0)
                            , mkResource Plus $ CubeCoord (0, 1, -1)
                            , mkResource Plus $ CubeCoord (0, -1, 1)
+                           -- side resources
+                           , mkResource Star $ CubeCoord (2, 2, -4)
+                           , mkResource Star $ CubeCoord (-2, -2, 4)
+                           , mkResource Star $ CubeCoord (-4, 2, 2)
+                           , mkResource Star $ CubeCoord (4, -2, -2)
+                           , mkResource Star $ CubeCoord (2, -4, 2)
+                           , mkResource Star $ CubeCoord (-2, 4, -2)
+                           -- side plus
+                           , mkResource Plus $ CubeCoord (1, 3, -4)
+                           , mkResource Plus $ CubeCoord (3, 1, -4)
+                           , mkResource Plus $ CubeCoord (-1, -3, 4)
+                           , mkResource Plus $ CubeCoord (-3, -1, 4)
+                           , mkResource Plus $ CubeCoord (-4, 3, 1)
+                           , mkResource Plus $ CubeCoord (-4, 1, 3)
+                           , mkResource Plus $ CubeCoord (4, -3, -1)
+                           , mkResource Plus $ CubeCoord (4, -1, -3)
+                           , mkResource Plus $ CubeCoord (3, -4, 1)
+                           , mkResource Plus $ CubeCoord (1, -4, 3)
+                           , mkResource Plus $ CubeCoord (-3, 4, -1)
+                           , mkResource Plus $ CubeCoord (-1, 4, -3)
                            ]
         , _gameGrid      = hexagonGrid gridArgs
         }
