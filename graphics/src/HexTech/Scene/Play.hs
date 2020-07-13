@@ -117,7 +117,7 @@ playStep
 playStep = do
   input <- getInput
   let shallPause =
-        (  ksStatus (Input.iSpace input)
+        (  ksStatus (Input.iPause input)
         == KeyStatus'Pressed
         || ksStatus (Input.iEscape input)
         == KeyStatus'Pressed
@@ -178,7 +178,7 @@ updatePlayerAction = do
   --logInfo input
 
   let mouseClicks = Input.iMouseClick input
-      enter       = ksStatus (Input.iEnter input) == KeyStatus'Pressed
+      enter       = ksStatus (Input.iSelect input) == KeyStatus'Pressed
 
   case mouseClicks of
     (mouseClick : _) -> do
@@ -232,9 +232,9 @@ updateSelectedTile = do
             (playVars . _pvSelectedTile)
               .= (Map.lookup (tileCoords +> directionShift dir) tiles)
             --logInfo mCurrentTile
-          Nothing ->
-            (playVars . _pvSelectedTile)
-              .= (Map.lookup (CubeCoord (0, 0, 0)) tiles)
+          Nothing -> return ()
+            --(playVars . _pvSelectedTile)
+            --  .= (Map.lookup (CubeCoord (0, 0, 0)) tiles)
   when up $ move (if ctrl then NorthWest else NorthEast)
   when down $ move (if ctrl then SouthEast else SouthWest)
   when left $ move West
@@ -410,8 +410,8 @@ pauseStep = do
   drawPause
   updateSettings
   updateGameMusic
-  let shallResume = (ksStatus (iSpace input) == KeyStatus'Pressed)
-      shallQuit   = (ksStatus (iEscape input) == KeyStatus'Pressed)
+  let shallResume = (ksStatus (Input.iPause input) == KeyStatus'Pressed)
+      shallQuit   = (ksStatus (Input.iEscape input) == KeyStatus'Pressed)
   when shallResume (toScene Scene'Play)
   when shallQuit   (toScene Scene'Title)
 

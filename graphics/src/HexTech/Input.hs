@@ -24,8 +24,9 @@ data Input = Input
   , iLeft :: KeyState Int
   , iRight :: KeyState Int
   , iEscape :: KeyState Int
-  , iEnter :: KeyState Int
+  , iSelect :: KeyState Int
   , iCtrl :: KeyState Int
+  , iPause :: KeyState Int
   , iQuit :: Bool
   , iMute :: KeyState Int
   , iShowCoords :: KeyState Int
@@ -42,7 +43,8 @@ initInput = Input { iSpace      = initKeyState
                   , iLeft       = initKeyState
                   , iRight      = initKeyState
                   , iEscape     = initKeyState
-                  , iEnter      = initKeyState
+                  , iSelect     = initKeyState
+                  , iPause      = initKeyState
                   , iCtrl       = initKeyState
                   , iQuit       = False
                   , iMute       = initKeyState
@@ -91,14 +93,15 @@ updateInput' = do
   setInput (stepControl events input)
 
 stepControl :: [SDL.EventPayload] -> Input -> Input
-stepControl events Input { iSpace, iUp, iDown, iEscape, iEnter, iMute, iShowCoords, iLeft, iRight, iCtrl, iMouseClick }
-  = Input { iSpace      = next 1 [SDL.KeycodeSpace, SDL.KeycodeP] iSpace
+stepControl events Input { iSpace, iUp, iDown, iEscape, iSelect, iMute, iShowCoords, iLeft, iRight, iCtrl, iPause }
+  = Input { iSpace      = next 1 [SDL.KeycodeSpace] iSpace
+          , iPause      = next 1 [SDL.KeycodeP] iPause
           , iUp         = next 1 [SDL.KeycodeUp, SDL.KeycodeW] iUp
           , iDown       = next 1 [SDL.KeycodeDown, SDL.KeycodeS] iDown
           , iLeft       = next 1 [SDL.KeycodeLeft, SDL.KeycodeA] iLeft
           , iRight      = next 1 [SDL.KeycodeRight, SDL.KeycodeD] iRight
           , iEscape     = next 1 [SDL.KeycodeEscape, SDL.KeycodeQ] iEscape
-          , iEnter      = next 1 [SDL.KeycodeReturn] iEnter
+          , iSelect     = next 1 [SDL.KeycodeReturn, SDL.KeycodeSpace] iSelect
           , iCtrl       = next 1 [SDL.KeycodeLCtrl, SDL.KeycodeRCtrl] iCtrl
           , iMute       = next 1 [SDL.KeycodeM] iMute
           , iShowCoords = next 1 [SDL.KeycodeN] iShowCoords
