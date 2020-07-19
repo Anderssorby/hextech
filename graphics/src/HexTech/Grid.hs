@@ -16,6 +16,9 @@ module HexTech.Grid
   , toAxialCoords
   , neighbours
   , pointToTile
+  , tCoords
+  , tCorners
+  , tCenter
   )
 where
 
@@ -43,8 +46,13 @@ ccToTuple (CubeCoord coords) = coords
 (CubeCoord (x, y, z)) +> (sx, sy, sz) = CubeCoord (x + sx, y + sy, z + sz)
 
 
-data Tile = Tile {tileCoords :: CubeCoord, tileCorners :: [Point], tileCenter :: Point } deriving (Show, Eq)
-makeLenses ''Tile
+data Tile =
+    Tile
+        { tileCoords :: CubeCoord
+        , tileCorners :: [Point]
+        , tileCenter :: Point
+        } deriving (Show, Eq)
+makeLensesFor [("tileCoords", "tCoords"), ("tileCorners", "tCorners"), ("tileCenter", "tCenter")] ''Tile
 
 
 data GridArgs = GridArgs {gRadius :: Int, gPosition :: Point, gSize :: Int} deriving (Show, Eq)

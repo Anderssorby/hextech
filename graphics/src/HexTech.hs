@@ -38,8 +38,8 @@ import           HexTech.Camera                 ( CameraControl(..)
 import           HexTech.Config                 ( Config(..)
                                                 , screenV2
                                                 )
-import           HexTech.State                  ( Vars(..)
-                                                , initVars
+import           HexTech.State                  ( Model(..)
+                                                , initModel
                                                 , enableZoom'
                                                 , adjustCamera'
                                                 , disableZoom'
@@ -65,9 +65,8 @@ import           HexTech.Resource               ( loadResources
                                                 , Resources(..)
                                                 , freeResources
                                                 )
+import qualified HexTech.Input                 as Input
 import           HexTech.Input                  ( HasInput
-                                                --, iEscape
-                                                , iQuit
                                                 , getInput
                                                 , setInput
                                                 , updateInput
@@ -85,10 +84,10 @@ import           HexTech.Wrapper.SDLRenderer    ( SDLRenderer(..)
 
 
 
-newtype HexTech a = HexTech (ReaderT Config (StateT Vars IO) a)
-  deriving (Functor, Applicative, Monad, MonadReader Config, MonadState Vars, MonadIO, MonadThrow, MonadCatch)
+newtype HexTech a = HexTech (ReaderT Config (StateT Model IO) a)
+  deriving (Functor, Applicative, Monad, MonadReader Config, MonadState Model, MonadIO, MonadThrow, MonadCatch)
 
-runHexTech :: Config -> Vars -> HexTech a -> IO a
+runHexTech :: Config -> Model -> HexTech a -> IO a
 runHexTech config v (HexTech m) = evalStateT (runReaderT m config) v
 
 main :: IO ()
@@ -105,7 +104,7 @@ main = do
   let
     cfg =
       Config { cWindow = window, cRenderer = renderer, cResources = resources }
-  runHexTech cfg initVars mainLoop
+  runHexTech cfg initModel mainLoop
   SDL.destroyWindow window
   freeResources resources
   Mixer.closeAudio
@@ -118,7 +117,7 @@ main = do
 -}
 mainLoop
   :: ( MonadReader Config m
-     , MonadState Vars m
+     , MonadState Model m
      , Audio m
      --, AudioSfx m
      , Logger m
@@ -132,8 +131,8 @@ mainLoop
      )
   => m ()
 mainLoop = do
-  updateInput
-  input <- getInput
+  Input.updateInput
+  input <- Input.getInput
   clearScreen
   --clearSfx
   scene <- gets vScene
@@ -144,7 +143,7 @@ mainLoop = do
   delayMilliseconds frameDeltaMilliseconds
   nextScene <- gets vNextScene
   stepScene scene nextScene
-  let quit = nextScene == Scene'Quit || iQuit input
+  let quit = nextScene == Scene'Quit || Input.iQuit input
   unless quit mainLoop
  where
 

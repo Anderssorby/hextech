@@ -8,7 +8,6 @@ import           Data.List.NonEmpty             ( NonEmpty(..) )
 import qualified Data.Vector.Storable          as Vector
 import           Control.Lens            hiding ( zoom )
 import           Control.Monad.State            ( MonadState(..)
-                                                , modify
                                                 , gets
                                                 )
 import           Control.Monad.Reader           ( MonadReader )
@@ -20,8 +19,7 @@ import           HexTech.Input                  ( HasInput(..)
                                                 )
 import           HexTech.Config                 ( Config(..) )
 import qualified HexTech.State                 as State
-import           HexTech.State                  ( Vars(..)
-                                                , HasSettings(..)
+import           HexTech.State                  ( HasSettings(..)
                                                 , modifySettings
                                                 , HasPlayVars(..)
                                                 , PlayVars(..)
@@ -59,9 +57,8 @@ import           HexTech.Camera                 ( CameraControl(..) )
 import           HexTech.Wrapper.SDLRenderer    ( SDLRenderer(..) )
 import qualified HexTech.Game                  as Game
 import           HexTech.Game                   ( HasGame(..)
-                                                , Player(..)
                                                 , Piece(..)
-                                                , ResourceType(..)
+                                                , Resource(..)
                                                 , initPlayer
                                                 , playerPieces
                                                 , playerName
@@ -83,8 +80,8 @@ import           HexTech.Grid                   ( Grid(..)
 playTransition
   :: (HasPlayVars s, HasSettings s, MonadState s m, Audio m, Logger m) => m ()
 playTransition = do
-  let game         = Game.twoPlayersGame
-      activePlayer = case game ^? (gamePlayers . ix 0) of
+  let game_        = Game.twoPlayersGame
+      activePlayer = case game_ ^? (gamePlayers . ix 0) of
         Just p  -> p
         Nothing -> initPlayer "Empty" (CubeCoord (0, 0, 0))
   playVars .= State.initPlayVars activePlayer
@@ -168,8 +165,9 @@ updatePlayerAction
      )
   => m ()
 updatePlayerAction = do
-  grid         <- use (game . gameGrid)
-  input        <- getInput
+  grid  <- use (game . gameGrid)
+  input <- getInput
+  let enter = ksStatus (Input.iSelect input) == KeyStatus'Pressed
   mCurrentTile <- use (playVars . _pvSelectedTile)
   let selectedCoord = case mCurrentTile of
         Just (Tile { tileCoords }) -> tileCoords
@@ -177,22 +175,6 @@ updatePlayerAction = do
   mCurrentPlayer <- use (playVars . _pvActivePlayer)
   --logInfo input
 
-  let mouseClicks = Input.iMouseClick input
-      enter       = ksStatus (Input.iSelect input) == KeyStatus'Pressed
-
-  case mouseClicks of
-    (mouseClick : _) -> do
-      let rightBut = (mouseClick ^. Input.mouseButton == Input.ButtonLeft)
-          mousePos = mouseClick ^. Input.mousePos
-      when rightBut $ do
-        --logInfo mouseClick
-        --logInfo mousePos
-        let mTile = Grid.pointToTile mousePos grid
-        case mTile of
-          Just tile -> playVars . _pvSelectedTile .= Just tile
-          Nothing   -> return ()
-
-    [] -> return ()
 
   when enter $ do
     (game . gamePlayers . ix 0 . playerPieces . ix 0 . piecePosition)
@@ -217,24 +199,45 @@ updateSelectedTile
      )
   => m ()
 updateSelectedTile = do
+  game_ <- use game
   tiles <- use (game . gameGrid . gTiles)
+  grid  <- use (game . gameGrid)
   input <- getInput
-  let up    = (ksStatus (Input.iUp input) == KeyStatus'Pressed)
-      down  = (ksStatus (Input.iDown input) == KeyStatus'Pressed)
-      left  = (ksStatus (Input.iLeft input) == KeyStatus'Pressed)
-      right = (ksStatus (Input.iRight input) == KeyStatus'Pressed)
-      ctrl  = (ksStatus (Input.iCtrl input) == KeyStatus'Held)
+  let up          = (ksStatus (Input.iUp input) == KeyStatus'Pressed)
+      down        = (ksStatus (Input.iDown input) == KeyStatus'Pressed)
+      left        = (ksStatus (Input.iLeft input) == KeyStatus'Pressed)
+      right       = (ksStatus (Input.iRight input) == KeyStatus'Pressed)
+      ctrl        = (ksStatus (Input.iCtrl input) == KeyStatus'Held)
+      mouseClicks = Input.iMouseClick input
+      selectTile mTile = case mTile of
+        Just tile -> do
+          let content = Game.onTile tile game_
+          playVars . _pvTileContent .= Just content
+          playVars . _pvSelectedTile .= Just tile
+        Nothing -> return ()
+
+  case mouseClicks of
+    (mouseClick : _) -> do
+      let rightBut = (mouseClick ^. Input.mouseButton == Input.ButtonLeft)
+          mousePos = mouseClick ^. Input.mousePos
+      when rightBut $ do
+        --logInfo mouseClick
+        --logInfo mousePos
+        selectTile (Grid.pointToTile mousePos grid)
+
+    [] -> return ()
 
   mCurrentTile <- use (playVars . _pvSelectedTile)
+
   let move dir = do
         case mCurrentTile of
           Just (Tile { tileCoords }) -> do
+            let mTile = Map.lookup (tileCoords +> directionShift dir) tiles
+            selectTile mTile
+          Nothing ->
             (playVars . _pvSelectedTile)
-              .= (Map.lookup (tileCoords +> directionShift dir) tiles)
-            --logInfo mCurrentTile
-          Nothing -> return ()
-            --(playVars . _pvSelectedTile)
-            --  .= (Map.lookup (CubeCoord (0, 0, 0)) tiles)
+              .= (Map.lookup (CubeCoord (0, 0, 0)) tiles)
+
   when up $ move (if ctrl then NorthWest else NorthEast)
   when down $ move (if ctrl then SouthEast else SouthWest)
   when left $ move West
@@ -282,16 +285,15 @@ drawPlay = do
 
   resources <- use (game . freeResources)
   mapM_
-    (\res -> do
-      let pos      = res ^. Game.resPosition
-          posPoint = tilePos pos
-          text     = case res ^. Game.resType of
+    (\(pos, res) -> do
+      let posPoint = tilePos pos
+          text     = case res of
             Star -> "*"
             Plus -> "+"
 
       drawText text (posPoint <+> T.p (-12) (-10))
     )
-    resources
+    (Map.toList resources)
 
   drawControlsText (10, 710)
   drawDigits (secondsToInteger $ pvSeconds pv) (T.p 50 50)
@@ -300,7 +302,22 @@ drawPlay = do
                  | otherwise = (rUnMuted . cResources)
 
   drawTextureSprite muteSprite (1000, 50)
+
+  mContent <- use (playVars . _pvTileContent)
+  case mContent of
+    Just content -> drawTileContent content (T.p 1000 80)
+    Nothing      -> return ()
+
   enableZoom
+
+
+drawTileContent :: (Renderer m) => Game.TileContent -> Point -> m ()
+drawTileContent content point = do
+  drawText "Tile Contains:" point
+  drawText ("Res: " <> T.showText (content ^. Game.tileResource))
+           (point <+> T.p 10 30)
+  drawText ("Pieces: " <> T.showText (content ^. Game.tilePieces))
+           (point <+> T.p 10 60)
 
 drawPiece :: (Renderer m) => Piece -> Point -> m ()
 drawPiece _piece point = do
@@ -395,7 +412,10 @@ playToPause :: Audio m => m ()
 playToPause = lowerGameMusic
 
 pauseStep
-  :: ( MonadState Vars m
+  :: ( MonadState s m
+     , HasSettings s
+     , HasPlayVars s
+     , HasGame s
      , SceneManager m
      , HasInput m
      , Renderer m

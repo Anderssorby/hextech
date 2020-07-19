@@ -11,7 +11,9 @@ import           Control.Monad.State            ( MonadState
                                                 , gets
                                                 )
 
+import qualified HexTech.Game                  as Game
 import           HexTech.Game                   ( Game
+                                                , TileContent(..)
                                                 , HasGame(..)
                                                 , Player(..)
                                                 , initPlayer
@@ -45,7 +47,9 @@ data PlayVars = PlayVars
     pvSeconds :: Seconds
   , pvZoom :: Float
   , pvSelectedTile :: Maybe Tile
+  , pvTileContent :: Maybe TileContent
   , pvActivePlayer :: Maybe Player
+  , pvPlayerActions :: [Game.Action]
   --, pvShowDino :: Bool
   --, pvDinoPos :: Animate.Position DinoKey Seconds
   --, pvMountainPos :: Animate.Position MountainKey Seconds
@@ -62,10 +66,12 @@ data PlayVars = PlayVars
 makeClassy_ ''PlayVars
 
 initPlayVars :: Player -> PlayVars
-initPlayVars activePlayer = PlayVars { pvSeconds      = 0
-                                     , pvZoom         = 1
-                                     , pvSelectedTile = Nothing
-                                     , pvActivePlayer = Just activePlayer
+initPlayVars activePlayer = PlayVars { pvSeconds       = 0
+                                     , pvZoom          = 1
+                                     , pvSelectedTile  = Nothing
+                                     , pvTileContent   = Nothing
+                                     , pvActivePlayer  = Just activePlayer
+                                     , pvPlayerActions = []
                                      }
   --, pvDinoState         = DinoState DinoAction'Move Nothing Nothing Nothing
   --, pvDinoPos           = Animate.initPosition DinoKey'Move
@@ -93,32 +99,30 @@ modifySettings
   :: (MonadState s m, HasSettings s) => (Settings -> Settings) -> m ()
 modifySettings f = modify $ settings %~ f
 
-data Vars = Vars
+-- State of the program
+data Model = Model
   { vGame :: Game
   , vScene :: SceneType
   , vNextScene :: SceneType
   , vTitle :: TitleVars
   , vPlay :: PlayVars
-  --, vGameOver :: GameOverVars
   , vInput :: Input
   , vCamera :: Camera
   , vSettings :: Settings
   } deriving (Show, Eq)
+makeClassy_ ''Model
 
-
-makeClassy_ ''Vars
-
-initVars :: Vars
-initVars = Vars { vGame      = game
-                , vScene     = Scene'Title
-                , vNextScene = Scene'Title
-                , vTitle     = initTitleVars
+initModel :: Model
+initModel = Model { vGame      = game
+                  , vScene     = Scene'Title
+                  , vNextScene = Scene'Title
+                  , vTitle     = initTitleVars
                 -- TODO dont init until game start
-                , vPlay      = initPlayVars activePlayer
-                , vInput     = initInput
-                , vCamera    = initCamera
-                , vSettings  = initSettings
-                }
+                  , vPlay      = initPlayVars activePlayer
+                  , vInput     = initInput
+                  , vCamera    = initCamera
+                  , vSettings  = initSettings
+                  }
  where
   game         = twoPlayersGame
   activePlayer = case game ^? (gamePlayers . ix 0) of
@@ -126,29 +130,29 @@ initVars = Vars { vGame      = game
     Nothing -> initPlayer "Empty" (CubeCoord (0, 0, 0))
 
 
-toScene' :: MonadState Vars m => SceneType -> m ()
+toScene' :: MonadState Model m => SceneType -> m ()
 toScene' scene = modify (\v -> v { vNextScene = scene })
 
-instance HasGame Vars where
+instance HasGame Model where
   game = lens vGame (\v s -> v { vGame = s })
 
-instance HasSettings Vars where
+instance HasSettings Model where
   settings = lens vSettings (\v s -> v { vSettings = s })
 
---instance HasCommonVars Vars where
+--instance HasCommonVars Model where
 --  commonVars = lens vCommon (\v s -> v { vCommon = s })
 --
-instance HasTitleVars Vars where
+instance HasTitleVars Model where
   titleVars = lens vTitle (\v s -> v { vTitle = s })
 
-instance HasPlayVars Vars where
+instance HasPlayVars Model where
   playVars = lens vPlay (\v s -> v { vPlay = s })
 --
---instance HasGameOverVars Vars where
+--instance HasGameOverVars Model where
 --  gameOverVars = lens vGameOver (\v s -> v { vGameOver = s })
 
 adjustCamera'
-  :: (MonadIO m, MonadReader Config m, MonadState Vars m) => Camera -> m ()
+  :: (MonadIO m, MonadReader Config m, MonadState Model m) => Camera -> m ()
 adjustCamera' cam = do
   modify $ \v -> set _vCamera cam v
   renderer <- asks cRenderer
@@ -159,14 +163,14 @@ disableZoom' = do
   renderer <- asks cRenderer
   moveCamera renderer initCamera
 
-enableZoom' :: (MonadIO m, MonadReader Config m, MonadState Vars m) => m ()
+enableZoom' :: (MonadIO m, MonadReader Config m, MonadState Model m) => m ()
 enableZoom' = do
   renderer <- asks cRenderer
   cam      <- gets vCamera
   moveCamera renderer cam
 
-getInput' :: MonadState Vars m => m Input
+getInput' :: MonadState Model m => m Input
 getInput' = gets vInput
 
-setInput' :: MonadState Vars m => Input -> m ()
+setInput' :: MonadState Model m => Input -> m ()
 setInput' input = modify (\v -> v { vInput = input })

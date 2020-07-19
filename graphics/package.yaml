@@ -37,7 +37,7 @@ dependencies:
 - hlint
 - brittany
 #- importify
-ghc-options: -Wall #-F -pgmF requirepp
+ghc-options: -Wall -O0 #-F -pgmF requirepp
 default-extensions:
 - DuplicateRecordFields
 - FlexibleContexts

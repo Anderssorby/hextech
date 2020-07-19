@@ -13,10 +13,14 @@ module HexTech.Game
   , pieceStrength
   , pieceType
   , Resource(..)
-  , resType
-  , resPosition
-  , ResourceType(..)
+  --, resType
+  --, resPosition
+  --, ResourceType(..)
   , PieceType(..)
+  , onTile
+  , TileContent(..)
+  , tileResource
+  , tilePieces
   --, movePiece
   --, runGame
   --, runRound
@@ -24,9 +28,10 @@ module HexTech.Game
   )
 where
 
-import           Data.Text
+import           Data.Text                      ( Text )
 import qualified Data.List.NonEmpty            as NonEmpty
 import           Data.List.NonEmpty             ( NonEmpty(..) )
+import qualified HexTech.Grid                  as Grid
 import           HexTech.Grid                   ( Grid(..)
                                                 , GridArgs(..)
                                                 , CubeCoord(..)
@@ -44,7 +49,7 @@ import qualified Data.Map.Strict               as Map
 import           Data.Map.Strict                ( Map )
 
 
-data PieceType = Commander | Drone | Tower | FastDrone deriving (Show, Eq, Ord)
+data PieceType = Commander | Drone | Tower | FastDrone deriving (Show, Eq, Ord, Enum, Bounded)
 
 pieceStrength :: PieceType -> Int
 pieceStrength Commander = 3
@@ -52,15 +57,15 @@ pieceStrength Drone     = 1
 pieceStrength Tower     = 3
 pieceStrength FastDrone = 1
 
-data ResourceType = Plus | Star deriving (Show, Eq, Enum, Ord)
+data Resource = Plus | Star deriving (Show, Eq, Enum, Ord)
 
 type GridPosition = CubeCoord
 
-data Resource = Resource {_resType :: ResourceType, _resPosition :: GridPosition} deriving (Show, Eq)
-makeLenses ''Resource
+--data Resource = Resource {_resType :: ResourceType, _resPosition :: GridPosition} deriving (Show, Eq)
+--makeLenses ''Resource
 
-mkResource :: ResourceType -> CubeCoord -> Resource
-mkResource t pos = Resource { _resType = t, _resPosition = pos }
+mkResource :: Resource -> CubeCoord -> (CubeCoord, Resource)
+mkResource t pos = (pos, t)
 
 data Piece = Piece
     { _piecePosition :: GridPosition
@@ -72,7 +77,7 @@ makeLenses ''Piece
 data Player = Player
     { _playerName :: Text
     , _playerPieces :: [Piece]
-    , _playerResources :: [ResourceType]
+    , _playerResources :: [Resource]
     } deriving (Show, Eq)
 makeLenses ''Player
 
@@ -91,16 +96,33 @@ initPlayer name corner = Player
 
 data Game = Game
       { _gamePlayers :: NonEmpty Player
-      --, _playerPieces :: Map Player [Piece]
-      --, _piecePositions :: Map Piece GridPosition
-      --, playerResources :: Map Player [ResourceType]
-      --, playerNames :: Map Player String
-      , _freeResources :: [Resource]
+      , _freeResources :: Map CubeCoord Resource
       , _gameGrid :: Grid
       } deriving (Show, Eq)
-
-
 makeClassy ''Game
+
+data TileContent =
+    TileContent { _tileResource :: Maybe Resource
+                , _tilePieces :: [Piece]
+                } deriving (Show, Eq)
+makeLenses ''TileContent
+
+{-| Query what is on the tile
+ -}
+onTile :: Grid.Tile -> Game -> TileContent
+onTile tile game = TileContent { _tileResource = mResource
+                               , _tilePieces   = pieces
+                               }
+ where
+  coord     = tile ^. Grid.tCoords
+  mResource = game ^. (freeResources . at coord)
+  pieces    = foldr
+    (\p acc ->
+      acc ++ (filter (\pi -> pi ^. piecePosition == coord) $ p ^. playerPieces)
+    )
+    []
+    (NonEmpty.toList $ game ^. gamePlayers)
+
 
 --movePiece :: Piece -> GridPosition -> Piece
 --movePiece piece pos = do
@@ -120,6 +142,9 @@ data Action
     | Attack GridPosition
     deriving (Show, Eq)
 
+data Transcript = Transcript {_tActions :: [(Text, [Action])]}
+
+
 
 twoPlayersGame :: Game
 twoPlayersGame =
@@ -130,34 +155,35 @@ twoPlayersGame =
       gridArgs = GridArgs { gRadius = 5, gSize = 50, gPosition = T.p 600 450 }
   in  Game
         { _gamePlayers   = players
-        , _freeResources = [ mkResource Star $ CubeCoord (0, 0, 0)
-                           , mkResource Plus $ CubeCoord (1, 0, -1)
-                           , mkResource Plus $ CubeCoord (-1, 0, 1)
-                           , mkResource Plus $ CubeCoord (1, -1, 0)
-                           , mkResource Plus $ CubeCoord (-1, 1, 0)
-                           , mkResource Plus $ CubeCoord (0, 1, -1)
-                           , mkResource Plus $ CubeCoord (0, -1, 1)
+        , _freeResources = Map.fromList
+                             [ mkResource Star $ CubeCoord (0, 0, 0)
+                             , mkResource Plus $ CubeCoord (1, 0, -1)
+                             , mkResource Plus $ CubeCoord (-1, 0, 1)
+                             , mkResource Plus $ CubeCoord (1, -1, 0)
+                             , mkResource Plus $ CubeCoord (-1, 1, 0)
+                             , mkResource Plus $ CubeCoord (0, 1, -1)
+                             , mkResource Plus $ CubeCoord (0, -1, 1)
                            -- side resources
-                           , mkResource Star $ CubeCoord (2, 2, -4)
-                           , mkResource Star $ CubeCoord (-2, -2, 4)
-                           , mkResource Star $ CubeCoord (-4, 2, 2)
-                           , mkResource Star $ CubeCoord (4, -2, -2)
-                           , mkResource Star $ CubeCoord (2, -4, 2)
-                           , mkResource Star $ CubeCoord (-2, 4, -2)
+                             , mkResource Star $ CubeCoord (2, 2, -4)
+                             , mkResource Star $ CubeCoord (-2, -2, 4)
+                             , mkResource Star $ CubeCoord (-4, 2, 2)
+                             , mkResource Star $ CubeCoord (4, -2, -2)
+                             , mkResource Star $ CubeCoord (2, -4, 2)
+                             , mkResource Star $ CubeCoord (-2, 4, -2)
                            -- side plus
-                           , mkResource Plus $ CubeCoord (1, 3, -4)
-                           , mkResource Plus $ CubeCoord (3, 1, -4)
-                           , mkResource Plus $ CubeCoord (-1, -3, 4)
-                           , mkResource Plus $ CubeCoord (-3, -1, 4)
-                           , mkResource Plus $ CubeCoord (-4, 3, 1)
-                           , mkResource Plus $ CubeCoord (-4, 1, 3)
-                           , mkResource Plus $ CubeCoord (4, -3, -1)
-                           , mkResource Plus $ CubeCoord (4, -1, -3)
-                           , mkResource Plus $ CubeCoord (3, -4, 1)
-                           , mkResource Plus $ CubeCoord (1, -4, 3)
-                           , mkResource Plus $ CubeCoord (-3, 4, -1)
-                           , mkResource Plus $ CubeCoord (-1, 4, -3)
-                           ]
+                             , mkResource Plus $ CubeCoord (1, 3, -4)
+                             , mkResource Plus $ CubeCoord (3, 1, -4)
+                             , mkResource Plus $ CubeCoord (-1, -3, 4)
+                             , mkResource Plus $ CubeCoord (-3, -1, 4)
+                             , mkResource Plus $ CubeCoord (-4, 3, 1)
+                             , mkResource Plus $ CubeCoord (-4, 1, 3)
+                             , mkResource Plus $ CubeCoord (4, -3, -1)
+                             , mkResource Plus $ CubeCoord (4, -1, -3)
+                             , mkResource Plus $ CubeCoord (3, -4, 1)
+                             , mkResource Plus $ CubeCoord (1, -4, 3)
+                             , mkResource Plus $ CubeCoord (-3, 4, -1)
+                             , mkResource Plus $ CubeCoord (-1, 4, -3)
+                             ]
         , _gameGrid      = hexagonGrid gridArgs
         }
 

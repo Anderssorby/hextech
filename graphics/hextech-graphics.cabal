@@ -4,7 +4,7 @@ cabal-version: 2.0
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8270e8f5ee63b99ed7d27dd91d51224c8d914f368252d8994388211e7c177758
+-- hash: bf9620a3e6bcdb88e1d9f6e9b85de0a97de1a824b2c4f8845e4e136499ba98a2
 
 name:           hextech-graphics
 version:        0.2.0
@@ -35,7 +35,7 @@ library
   hs-source-dirs:
       src
   default-extensions: DuplicateRecordFields FlexibleContexts FlexibleInstances GeneralizedNewtypeDeriving LambdaCase NamedFieldPuns ScopedTypeVariables OverloadedStrings TemplateHaskell MultiParamTypeClasses ConstraintKinds DeriveGeneric RecordWildCards StandaloneDeriving TupleSections TypeApplications ViewPatterns GADTs
-  ghc-options: -Wall
+  ghc-options: -Wall -O0
   build-depends:
       StateVar
     , aeson
@@ -98,7 +98,7 @@ executable hextech-graphics
   hs-source-dirs:
       src
   default-extensions: DuplicateRecordFields FlexibleContexts FlexibleInstances GeneralizedNewtypeDeriving LambdaCase NamedFieldPuns ScopedTypeVariables OverloadedStrings TemplateHaskell MultiParamTypeClasses ConstraintKinds DeriveGeneric RecordWildCards StandaloneDeriving TupleSections TypeApplications ViewPatterns GADTs
-  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -O0 -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       StateVar
     , aeson
@@ -142,7 +142,7 @@ test-suite hextech-graphics-test
   hs-source-dirs:
       test
   default-extensions: DuplicateRecordFields FlexibleContexts FlexibleInstances GeneralizedNewtypeDeriving LambdaCase NamedFieldPuns ScopedTypeVariables OverloadedStrings TemplateHaskell MultiParamTypeClasses ConstraintKinds DeriveGeneric RecordWildCards StandaloneDeriving TupleSections TypeApplications ViewPatterns GADTs
-  ghc-options: -Wall -Wall
+  ghc-options: -Wall -O0 -Wall
   build-depends:
       StateVar
     , aeson

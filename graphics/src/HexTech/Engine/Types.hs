@@ -24,8 +24,11 @@ negateP (Point (x, y)) = p (-x) (-y)
 --instance Functor Point where
 --  fmap f (Point (x, y)) = p (f x) (f y)
 
-p :: Integral a => a -> a -> Point
-p x y = Point (fromIntegral x, fromIntegral y)
+p_ :: Integral a => a -> a -> Point
+p_ x y = Point (fromIntegral x, fromIntegral y)
+
+p :: Int -> Int -> Point
+p x y = p_ x y
 
 (<+>) :: Point -> Point -> Point
 (Point (x1, y1)) <+> (Point (x2, y2)) = Point (x1 + x2, y1 + y2)
@@ -42,7 +45,7 @@ toSDLPoint :: Integral a => Point -> SDLPoint a
 toSDLPoint (Point (x, y)) = mkSDLPoint x y
 
 toPoint :: Integral a => SDLPoint a -> Point
-toPoint (SDL.P (SDL.V2 x y)) = p x y
+toPoint (SDL.P (SDL.V2 x y)) = p_ x y
 
 frameDeltaSeconds :: Fractional a => a
 frameDeltaSeconds = 0.016667
