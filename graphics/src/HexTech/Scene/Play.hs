@@ -325,10 +325,18 @@ drawPlay = do
 drawTileContent :: (Renderer m) => Game.TileContent -> Point -> m ()
 drawTileContent content point = do
   drawText "Tile Contains:" point
-  drawText ("Res: " <> T.showText (content ^. Game.tileResource))
-           (point <+> T.p 10 30)
-  drawText ("Pieces: " <> T.showText (content ^. Game.tilePieces))
-           (point <+> T.p 10 60)
+
+  case content ^. Game.tileResource of
+    Just res -> drawText ("Res: " <> T.showText res) (point <+> T.p 10 30)
+    Nothing  -> return ()
+
+  let pieces = content ^. Game.tilePieces
+
+  mapM_
+    (\(i, p) -> drawText (T.showText (p ^. Game.pieceType))
+                         (point <+> T.p 10 (30 * i + 60))
+    )
+    (zip [0 ..] pieces)
 
 drawPiece :: (Renderer m) => Piece -> Point -> m ()
 drawPiece _piece point = do
