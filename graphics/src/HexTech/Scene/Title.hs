@@ -1,7 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 module HexTech.Scene.Title where
 
---import qualified Animate
 import           Control.Lens
 import           Control.Monad                  ( when )
 import           Control.Monad.Reader           ( MonadReader(..) )
@@ -11,29 +10,12 @@ import           Control.Monad.State            ( MonadState(..)
                                                 )
 import           KeyState
 
+import           HexTech.State                 as State
 import           HexTech.Config                 ( Config(..) )
---import           HexTech.Engine.Types
---import           HexTech.Engine.Common
 import           HexTech.Engine.Renderer        ( Renderer )
 import qualified HexTech.Engine.Renderer       as Renderer
 import qualified HexTech.Input                 as Input
 import           HexTech.Input                  ( HasInput(..) )
-import           HexTech.Scene
-
-data TitleVars = TitleVars
-  {
-  {-tvDinoPos :: Animate.Position DinoKey Seconds
-  , tvMountainPos :: Animate.Position MountainKey Seconds
-  , tvRiverPos :: Animate.Position RiverKey Seconds
-  , -}
-  tvFlashing :: Float
-
-  } deriving (Show, Eq)
-
-makeClassy ''TitleVars
-
-initTitleVars :: TitleVars
-initTitleVars = TitleVars 0
 
 titleShowPressSpace :: Float -> Bool
 titleShowPressSpace p = sin p > 0.5
@@ -47,7 +29,7 @@ titleStep
      , MonadState s m
      , Renderer m
      , HasInput m
-     , SceneManager m
+     , State.SceneManager m
      )
   => m ()
 titleStep = do
@@ -59,13 +41,12 @@ titleStep = do
   drawTitle
 
 updateTitle
-  :: ( HasTitleVars s
+  :: ( State.HasTitleVars s
      --, HasCommonVars s
      , MonadReader Config m
      , MonadState s m
      , Renderer m
      , HasInput m
-     , SceneManager m
      )
      --, AudioSfx m
   => m ()
@@ -84,7 +65,9 @@ updateTitle = do
   --let riverPos' =
   --      Animate.stepPosition riverAnimations riverPos frameDeltaSeconds
   --
-  modify $ titleVars %~ (\tv -> tv { tvFlashing = tvFlashing tv + 0.025 })
+  modify
+    $  State.titleVars
+    %~ (\tv -> tv { tvFlashing = State.tvFlashing tv + 0.025 })
 
 drawTitle
   :: ( HasTitleVars s
@@ -93,12 +76,12 @@ drawTitle
      , MonadState s m
      , Renderer m
      , HasInput m
-     , SceneManager m
+     , State.SceneManager m
      )
      --, HUD m
   => m ()
 drawTitle = do
-  tv <- gets (view titleVars)
+  tv <- use titleVars
   --quake              <- gets (cvQuake . view commonVars)
   --
   --mountainAnimations <- getMountainAnimations
@@ -123,7 +106,7 @@ drawTitle = do
 
   Renderer.drawTitleText (300, 180)
 
-  when (titleShowPressSpace $ tvFlashing tv)
+  when (titleShowPressSpace $ State.tvFlashing tv)
     $ Renderer.drawPressSpaceText (550, 500)
-  when (titleShowPressEscape $ tvFlashing tv)
+  when (titleShowPressEscape $ State.tvFlashing tv)
     $ Renderer.drawPressEscapeText (490, 500)

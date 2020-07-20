@@ -13,7 +13,6 @@ import           SDL.Vect                       ( V2(..)
                                                 , (*^)
                                                 )
 import           Control.Monad.Reader
---import qualified Data.Vector.Storable          as Vector
 import           Data.Vector.Storable           ( Vector )
 
 import           HexTech.Config                 ( Config(..) )

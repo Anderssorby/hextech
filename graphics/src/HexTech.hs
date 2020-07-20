@@ -38,8 +38,11 @@ import           HexTech.Camera                 ( CameraControl(..)
 import           HexTech.Config                 ( Config(..)
                                                 , screenV2
                                                 )
+import qualified HexTech.State                 as State
 import           HexTech.State                  ( Model(..)
-                                                , initModel
+                                                , SceneType(..)
+                                                , SceneManager(..)
+                                                , HasTitleVars
                                                 , enableZoom'
                                                 , adjustCamera'
                                                 , disableZoom'
@@ -47,14 +50,8 @@ import           HexTech.State                  ( Model(..)
                                                 , setInput'
                                                 , toScene'
                                                 )
-import           HexTech.Scene                  ( SceneType(..)
-                                                , SceneManager(..)
-                                                )
-import           HexTech.Scene.Title            ( HasTitleVars
-                                                , initTitleVars
-                                                , titleVars
-                                                , titleStep
-                                                )
+import qualified HexTech.Scene.Title           as Title
+import qualified HexTech.Scene.Play            as Play
 import           HexTech.Scene.Play             ( playTransition
                                                 , playStep
                                                 , pauseStep
@@ -104,7 +101,7 @@ main = do
   let
     cfg =
       Config { cWindow = window, cRenderer = renderer, cResources = resources }
-  runHexTech cfg initModel mainLoop
+  runHexTech cfg State.initModel mainLoop
   SDL.destroyWindow window
   freeResources resources
   Mixer.closeAudio
@@ -117,7 +114,7 @@ main = do
 -}
 mainLoop
   :: ( MonadReader Config m
-     , MonadState Model m
+     , MonadState State.Model m
      , Audio m
      --, AudioSfx m
      , Logger m
@@ -146,11 +143,11 @@ mainLoop = do
   let quit = nextScene == Scene'Quit || Input.iQuit input
   unless quit mainLoop
  where
-
+  playScene = Play.playScene
   step scene = do
     case scene of
-      Scene'Title    -> titleStep
-      Scene'Play     -> playStep
+      Scene'Title    -> Title.titleStep
+      Scene'Play     -> State.stepScene playScene
       Scene'Pause    -> pauseStep
       Scene'GameOver -> return ()
       Scene'Quit     -> return ()
@@ -160,7 +157,7 @@ mainLoop = do
       case nextScene of
         Scene'Title -> titleTransition
         Scene'Play  -> case scene of
-          Scene'Title -> playTransition
+          Scene'Title -> State.sceneTransition playScene
           Scene'Pause -> pauseToPlay
           _           -> return ()
         Scene'Pause -> case scene of
@@ -175,7 +172,7 @@ titleTransition
 titleTransition = do
   stopGameMusic
   adjustCamera initCamera
-  modify $ titleVars .~ initTitleVars
+  State.titleVars .= State.initTitleVars
 
 -- TODO remove unnecessary instances
 instance Audio HexTech where

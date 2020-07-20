@@ -11,61 +11,49 @@ import           Control.Monad.State            ( MonadState
                                                 , gets
                                                 )
 
+import           HexTech.Engine.Audio           ( Audio )
+import           HexTech.Engine.Types           ( Logger )
+import           HexTech.Engine.Renderer        ( Renderer )
 import qualified HexTech.Game                  as Game
-import           HexTech.Game                   ( Game
-                                                , TileContent(..)
-                                                , HasGame(..)
-                                                , Player(..)
-                                                , initPlayer
-                                                , twoPlayersGame
-                                                )
 import           HexTech.Grid                   ( Tile(..)
                                                 , CubeCoord(..)
                                                 )
 
 import           HexTech.Config                 ( Config(..) )
-import           HexTech.Scene                  ( SceneType(..) )
-import           HexTech.Scene.Title            ( TitleVars
-                                                , HasTitleVars(..)
-                                                , initTitleVars
-                                                )
 import           HexTech.Camera                 ( Camera(..)
+                                                , CameraControl(..)
                                                 , initCamera
                                                 , moveCamera
                                                 )
 import           HexTech.Input                  ( Input(..)
+                                                , HasInput(..)
                                                 , initInput
                                                 )
 import           HexTech.Engine.Types           ( Seconds )
 
 
+
+data TitleVars = TitleVars
+  { tvFlashing :: Float
+  } deriving (Show, Eq)
+
+makeClassy ''TitleVars
+
+initTitleVars :: TitleVars
+initTitleVars = TitleVars 0
+
 data PlayVars = PlayVars
-  {
-  --pvScore :: Score
-  --, pvStocks :: Stocks
-  --, pvSpeed :: Percent
-    pvSeconds :: Seconds
+  { pvSeconds :: Seconds
   , pvZoom :: Float
   , pvSelectedTile :: Maybe Tile
-  , pvTileContent :: Maybe TileContent
-  , pvActivePlayer :: Maybe Player
+  , pvTileContent :: Maybe Game.TileContent
+  , pvActivePlayer :: Maybe Game.Player
   , pvPlayerActions :: [Game.Action]
-  --, pvShowDino :: Bool
-  --, pvDinoPos :: Animate.Position DinoKey Seconds
-  --, pvMountainPos :: Animate.Position MountainKey Seconds
-  --, pvRiverPos :: Animate.Position RiverKey Seconds
-  --, pvDinoState :: DinoState
-  --, pvMountainScroll :: Distance
-  --, pvJungleScroll :: Distance
-  --, pvGroundScroll :: Distance
-  --, pvRiverScroll :: Distance
-  --, pvObstacles :: [ObstacleState]
-  --, pvUpcomingObstacles :: [(Int, ObstacleTag)]
   } deriving (Show, Eq)
 
 makeClassy_ ''PlayVars
 
-initPlayVars :: Player -> PlayVars
+initPlayVars :: Game.Player -> PlayVars
 initPlayVars activePlayer = PlayVars { pvSeconds       = 0
                                      , pvZoom          = 1
                                      , pvSelectedTile  = Nothing
@@ -73,23 +61,11 @@ initPlayVars activePlayer = PlayVars { pvSeconds       = 0
                                      , pvActivePlayer  = Just activePlayer
                                      , pvPlayerActions = []
                                      }
-  --, pvDinoState         = DinoState DinoAction'Move Nothing Nothing Nothing
-  --, pvDinoPos           = Animate.initPosition DinoKey'Move
-  --, pvMountainPos       = Animate.initPosition MountainKey'Idle
-  --, pvRiverPos          = Animate.initPosition RiverKey'Idle
-  --, pvMountainScroll    = 0
-  --, pvJungleScroll      = 0
-  --, pvGroundScroll      = 0
-  --, pvRiverScroll       = 0
-  --, pvObstacles         = []
-  --, pvUpcomingObstacles = upcomingObstacles
 
 data Settings = Settings
     { _sMuted :: Bool
     , _sShowCoords :: Bool
     } deriving (Show, Eq)
-
-
 makeClassy ''Settings
 
 initSettings :: Settings
@@ -99,9 +75,17 @@ modifySettings
   :: (MonadState s m, HasSettings s) => (Settings -> Settings) -> m ()
 modifySettings f = modify $ settings %~ f
 
+data SceneType
+  = Scene'Title
+  | Scene'Play
+  | Scene'Pause
+  | Scene'GameOver
+  | Scene'Quit
+  deriving (Show, Eq)
+
 -- State of the program
 data Model = Model
-  { vGame :: Game
+  { vGame :: Game.Game
   , vScene :: SceneType
   , vNextScene :: SceneType
   , vTitle :: TitleVars
@@ -124,16 +108,36 @@ initModel = Model { vGame      = game
                   , vSettings  = initSettings
                   }
  where
-  game         = twoPlayersGame
-  activePlayer = case game ^? (gamePlayers . ix 0) of
+  game         = Game.twoPlayersGame
+  activePlayer = case game ^? (Game.gamePlayers . ix 0) of
     Just p  -> p
-    Nothing -> initPlayer "Empty" (CubeCoord (0, 0, 0))
+    Nothing -> Game.initPlayer "Empty" (CubeCoord (0, 0, 0))
+
+
+data Scene :: (* -> *) -> * where
+    Scene ::(MonadState Model m
+            , SceneManager m
+            , Renderer m
+            , CameraControl m
+            , HasInput m
+            , Audio m
+            , Logger m
+            , MonadReader Config m
+            ) =>
+        { drawScene :: m ()
+        , stepScene :: m ()
+        , sceneTransition :: m ()
+        } -> Scene m
+
+
+class Monad m => SceneManager m where
+  toScene :: SceneType -> m ()
 
 
 toScene' :: MonadState Model m => SceneType -> m ()
 toScene' scene = modify (\v -> v { vNextScene = scene })
 
-instance HasGame Model where
+instance Game.HasGame Model where
   game = lens vGame (\v s -> v { vGame = s })
 
 instance HasSettings Model where

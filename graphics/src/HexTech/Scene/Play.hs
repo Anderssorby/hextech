@@ -23,6 +23,8 @@ import           HexTech.State                  ( HasSettings(..)
                                                 , modifySettings
                                                 , HasPlayVars(..)
                                                 , PlayVars(..)
+                                                , SceneManager(..)
+                                                , SceneType(..)
                                                 )
 import qualified HexTech.Engine.Audio          as Audio
 import           HexTech.Engine.Audio           ( Audio(..) )
@@ -33,9 +35,6 @@ import           HexTech.Engine.Types           ( Logger(..)
                                                 , Point(..)
                                                 , frameDeltaSeconds
                                                 , secondsToInteger
-                                                )
-import           HexTech.Scene                  ( SceneManager(..)
-                                                , SceneType(..)
                                                 )
 import           HexTech.Resource               ( Resources(..)
                                                 , CommanderKey(..)
@@ -76,6 +75,22 @@ import           HexTech.Grid                   ( Grid(..)
 
 
 
+playScene
+  :: ( MonadState State.Model m
+     , SceneManager m
+     , Renderer m
+     , CameraControl m
+     , HasInput m
+     , Audio m
+     , Logger m
+     , MonadReader Config m
+     , Clock m
+     )
+  => State.Scene m
+playScene = State.Scene { drawScene       = drawPlay
+                        , stepScene       = playStep
+                        , sceneTransition = playTransition
+                        }
 
 playTransition
   :: (HasPlayVars s, HasSettings s, MonadState s m, Audio m, Logger m) => m ()
@@ -83,10 +98,8 @@ playTransition = do
   let game_        = Game.twoPlayersGame
       activePlayer = case game_ ^? (gamePlayers . ix 0) of
         Just p  -> p
-        Nothing -> initPlayer "Empty" (CubeCoord (0, 0, 0))
+        Nothing -> Game.initPlayer "Empty" (CubeCoord (0, 0, 0))
   playVars .= State.initPlayVars activePlayer
-  --PlayVars { pvUpcomingObstacles } <- gets (view playVars)
-  --modify $ playVars .~ (initPlayVars pvUpcomingObstacles)
   playGameMusic
 
 updateGameMusic :: (HasSettings s, MonadState s m, Audio m, Logger m) => m ()
@@ -146,8 +159,6 @@ updatePlay = do
   updateZoom
   updateCamera
   updateSettings
-  --isDead <- getDead
-  --when isDead (toScene Scene'Title)
 
 updatePlayerAction
   :: ( HasPlayVars s
