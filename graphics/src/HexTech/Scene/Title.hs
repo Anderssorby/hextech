@@ -10,12 +10,35 @@ import           Control.Monad.State            ( MonadState(..)
                                                 )
 import           KeyState
 
+import qualified HexTech.Engine.Types          as T
+import           HexTech.Engine.Types           ( Logger(..)
+                                                , Clock(..)
+                                                )
 import           HexTech.State                 as State
 import           HexTech.Config                 ( Config(..) )
 import           HexTech.Engine.Renderer        ( Renderer )
 import qualified HexTech.Engine.Renderer       as Renderer
 import qualified HexTech.Input                 as Input
 import           HexTech.Input                  ( HasInput(..) )
+import           HexTech.Engine.Audio           ( Audio(..) )
+
+
+scene
+  :: ( MonadState State.Model m
+     , State.SceneManager m
+     , Renderer m
+     , State.CameraControl m
+     , HasInput m
+     , Audio m
+     , Logger m
+     , MonadReader Config m
+     , Clock m
+     )
+  => State.Scene m
+scene = State.Scene { drawScene       = drawTitle
+                    , stepScene       = titleStep
+                    , sceneTransition = titleTransition
+                    }
 
 titleShowPressSpace :: Float -> Bool
 titleShowPressSpace p = sin p > 0.5
@@ -39,6 +62,13 @@ titleStep = do
        (toScene Scene'Quit)
   updateTitle
   drawTitle
+
+titleTransition
+  :: (HasTitleVars a, MonadState a m, CameraControl m, Audio m) => m ()
+titleTransition = do
+  stopGameMusic
+  adjustCamera initCamera
+  State.titleVars .= State.initTitleVars
 
 updateTitle
   :: ( State.HasTitleVars s

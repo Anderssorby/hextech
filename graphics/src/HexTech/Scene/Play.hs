@@ -25,12 +25,13 @@ import           HexTech.State                  ( HasSettings(..)
                                                 , PlayVars(..)
                                                 , SceneManager(..)
                                                 , SceneType(..)
+                                                , CameraControl(..)
                                                 )
 import qualified HexTech.Engine.Audio          as Audio
 import           HexTech.Engine.Audio           ( Audio(..) )
 import qualified HexTech.Engine.Types          as T
-import           HexTech.Engine.Types           ( (<+>) )
-import           HexTech.Engine.Types           ( Logger(..)
+import           HexTech.Engine.Types           ( (<+>)
+                                                , Logger(..)
                                                 , Clock(..)
                                                 , Point(..)
                                                 , frameDeltaSeconds
@@ -52,7 +53,6 @@ import           HexTech.Engine.Renderer        ( Renderer(..)
                                                 , setColorV4
                                                 , getColorV4
                                                 )
-import           HexTech.Camera                 ( CameraControl(..) )
 import           HexTech.Wrapper.SDLRenderer    ( SDLRenderer(..) )
 import qualified HexTech.Game                  as Game
 import           HexTech.Game                   ( HasGame(..)
@@ -75,7 +75,7 @@ import           HexTech.Grid                   ( Grid(..)
 
 
 
-playScene
+scene
   :: ( MonadState State.Model m
      , SceneManager m
      , Renderer m
@@ -87,10 +87,10 @@ playScene
      , Clock m
      )
   => State.Scene m
-playScene = State.Scene { drawScene       = drawPlay
-                        , stepScene       = playStep
-                        , sceneTransition = playTransition
-                        }
+scene = State.Scene { drawScene       = drawPlay
+                    , stepScene       = playStep
+                    , sceneTransition = playTransition
+                    }
 
 playTransition
   :: (HasPlayVars s, HasSettings s, MonadState s m, Audio m, Logger m) => m ()

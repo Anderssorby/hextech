@@ -4,7 +4,7 @@ cabal-version: 2.0
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8eb397c0cd1ff9f5abd9baaaaac76c5d640d002914e387e406f585db581a4d1f
+-- hash: 0f3043ef7d45d8bbf8e5a97b689509e1f1223d9f3b4fa154c0e0711b5999aa69
 
 name:           hextech-graphics
 version:        0.2.0
@@ -13,7 +13,6 @@ build-type:     Simple
 library
   exposed-modules:
       HexTech
-      HexTech.Camera
       HexTech.Config
       HexTech.Engine.Audio
       HexTech.Engine.Common
@@ -77,7 +76,6 @@ executable hextech-graphics
   main-is: Main.hs
   other-modules:
       HexTech
-      HexTech.Camera
       HexTech.Config
       HexTech.Engine.Audio
       HexTech.Engine.Common

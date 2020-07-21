@@ -14,12 +14,12 @@ import           Control.Monad.Reader
 import qualified SDL
 import qualified SDL.Mixer                     as Mixer
 import qualified SDL.Font                      as Font
-import qualified Data.Text.IO                  as T
+import qualified Data.Text.IO                  as TIO
 
 
+import qualified HexTech.Engine.Types          as T
 import           HexTech.Engine.Types           ( Clock(..)
                                                 , Logger(..)
-                                                , frameDeltaMilliseconds
                                                 )
 import           HexTech.Engine.Renderer        ( Renderer(..)
                                                 , drawTextureSprite
@@ -32,9 +32,6 @@ import           HexTech.Engine.Audio           ( Audio(..)
                                                 , lowerGameMusic'
                                                 , raiseGameMusic'
                                                 )
-import           HexTech.Camera                 ( CameraControl(..)
-                                                , initCamera
-                                                )
 import           HexTech.Config                 ( Config(..)
                                                 , screenV2
                                                 )
@@ -42,6 +39,7 @@ import qualified HexTech.State                 as State
 import           HexTech.State                  ( Model(..)
                                                 , SceneType(..)
                                                 , SceneManager(..)
+                                                , CameraControl(..)
                                                 , HasTitleVars
                                                 , enableZoom'
                                                 , adjustCamera'
@@ -137,17 +135,16 @@ mainLoop = do
   step scene
   --playSfx
   drawScreen
-  delayMilliseconds frameDeltaMilliseconds
+  delayMilliseconds T.frameDeltaMilliseconds
   nextScene <- gets vNextScene
   stepScene scene nextScene
   let quit = nextScene == Scene'Quit || Input.iQuit input
   unless quit mainLoop
  where
-  playScene = Play.playScene
   step scene = do
     case scene of
-      Scene'Title    -> Title.titleStep
-      Scene'Play     -> State.stepScene playScene
+      Scene'Title    -> State.stepScene Title.scene
+      Scene'Play     -> State.stepScene Play.scene
       Scene'Pause    -> pauseStep
       Scene'GameOver -> return ()
       Scene'Quit     -> return ()
@@ -155,9 +152,9 @@ mainLoop = do
   stepScene scene nextScene = do
     when (nextScene /= scene) $ do
       case nextScene of
-        Scene'Title -> titleTransition
+        Scene'Title -> State.sceneTransition Title.scene
         Scene'Play  -> case scene of
-          Scene'Title -> State.sceneTransition playScene
+          Scene'Title -> State.sceneTransition Play.scene
           Scene'Pause -> pauseToPlay
           _           -> return ()
         Scene'Pause -> case scene of
@@ -166,13 +163,6 @@ mainLoop = do
         Scene'GameOver -> return ()
         Scene'Quit     -> return ()
       modify (\v -> v { vScene = nextScene })
-
-titleTransition
-  :: (HasTitleVars a, MonadState a m, CameraControl m, Audio m) => m ()
-titleTransition = do
-  stopGameMusic
-  adjustCamera initCamera
-  State.titleVars .= State.initTitleVars
 
 -- TODO remove unnecessary instances
 instance Audio HexTech where
@@ -196,7 +186,7 @@ instance Clock HexTech where
   delayMilliseconds = liftIO . delayMilliseconds'
 
 instance Logger HexTech where
-  logText = liftIO . T.putStrLn
+  logText = liftIO . TIO.putStrLn
 
 instance CameraControl HexTech where
   adjustCamera = adjustCamera'
