@@ -4,7 +4,7 @@ cabal-version: 2.0
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8eb397c0cd1ff9f5abd9baaaaac76c5d640d002914e387e406f585db581a4d1f
+-- hash: 0778e6c3388efddf1cee86f5645e2c693c5e7c073f03d46b49095aef97ccf46a
 
 name:           hextech-graphics
 version:        0.2.0
@@ -46,6 +46,7 @@ library
     , bytestring
     , containers
     , extra
+    , file-embed
     , flow
     , hlint
     , key-state
@@ -108,6 +109,7 @@ executable hextech-graphics
     , bytestring
     , containers
     , extra
+    , file-embed
     , flow
     , hextech-graphics
     , hlint
@@ -152,6 +154,7 @@ test-suite hextech-graphics-test
     , bytestring
     , containers
     , extra
+    , file-embed
     , flow
     , hextech-graphics
     , hlint

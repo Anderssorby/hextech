@@ -1,5 +1,7 @@
 module HexTech.Resource where
 
+import qualified Data.ByteString
+import Data.FileEmbed
 import qualified SDL
 import qualified SDL.Mixer                     as Mixer
 import qualified SDL.Font                      as Font
@@ -14,6 +16,10 @@ import qualified SDL.Internal.Numbered         as Numbered
 import           HexTech.Engine.Types           ( showText
                                                 , Seconds
                                                 )
+
+
+resourceDir :: [(FilePath, Data.ByteString.ByteString)]
+resourceDir = $(embedDir "resource")
 
 data CommanderKey =
     Commander'Idle

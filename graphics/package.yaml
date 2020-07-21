@@ -33,6 +33,7 @@ dependencies:
 - text-conversions
 - random
 - ansi-terminal
+- file-embed
 # Dev
 - hlint
 - brittany
