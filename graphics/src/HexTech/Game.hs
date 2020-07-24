@@ -13,9 +13,6 @@ module HexTech.Game
   , pieceStrength
   , pieceType
   , Resource(..)
-  --, resType
-  --, resPosition
-  --, ResourceType(..)
   , PieceType(..)
   , onTile
   , TileContent(..)
@@ -61,8 +58,6 @@ data Resource = Plus | Star deriving (Show, Eq, Enum, Ord)
 
 type GridPosition = CubeCoord
 
---data Resource = Resource {_resType :: ResourceType, _resPosition :: GridPosition} deriving (Show, Eq)
---makeLenses ''Resource
 
 mkResource :: Resource -> CubeCoord -> (CubeCoord, Resource)
 mkResource t pos = (pos, t)
@@ -137,9 +132,9 @@ onTile tile game = TileContent { _tileResource = mResource
 data Action
     = Move GridPosition
     | Excavate
-    | BuildDrone GridPosition
+    | BuildDrone
     | UpgradePiece
-    | Attack GridPosition
+    | Attack
     deriving (Show, Eq)
 
 data Transcript = Transcript {_tActions :: [(Text, [Action])]}

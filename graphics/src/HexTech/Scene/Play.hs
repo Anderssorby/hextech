@@ -184,14 +184,9 @@ updatePlayerAction = do
         Just (Tile { tileCoords }) -> tileCoords
         Nothing                    -> CubeCoord (0, 0, 0)
   mCurrentPlayer <- use (playVars . _pvActivePlayer)
-  --logInfo input
-
-
   when enter $ do
     (game . gamePlayers . ix 0 . playerPieces . ix 0 . piecePosition)
       .= selectedCoord
-    --v <- use (game . gamePlayers . ix 0 . playerPieces . ix 0 . piecePosition)
-    --logInfo selectedCoord
 
 
 updateSelectedTile
