@@ -81,9 +81,30 @@ packages:
       sha256: 86a7dc23ff65ab2cc3318046f02be6412dd91ae09598089efb7be915fdbc1638
   original:
     hackage: validation-selective-0.0.0.0
+- completed:
+    hackage: morpheus-graphql-0.13.0@sha256:d8173116f630ecf264747bf31a823126452f144e1802d236b64efcf8677289cb,28007
+    pantry-tree:
+      size: 40014
+      sha256: 5b390bba65d00644b0c99d7cbda308d1ff0706a33c90523d6cfcdd5005cab90d
+  original:
+    hackage: morpheus-graphql-0.13.0
+- completed:
+    hackage: morpheus-graphql-core-0.13.0@sha256:af4c0cc0f5c84cbcb85486329574f2ced98326be4fedd8a7fa116bf783d5a8b6,6774
+    pantry-tree:
+      size: 8516
+      sha256: f0155c18930d61ebb6b1f5d81321bdf49f41dffbab3f9b07a6cc3785c540ac9b
+  original:
+    hackage: morpheus-graphql-core-0.13.0
+- completed:
+    hackage: relude-0.6.0.0@sha256:094ad587b28fa8dcc78fd0fba8927b970e5e4a9bb10a3126c0ca32a7ee61f3ca,8681
+    pantry-tree:
+      size: 4101
+      sha256: 79a99fd25ca55b12910780ed52fa60f3b19d97be03cb6ad5ad96abaf4f428478
+  original:
+    hackage: relude-0.6.0.0
 snapshots:
 - completed:
-    size: 493124
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/15/10.yaml
-    sha256: 48bc6d1d59224a5166265ef6cdda6a512f29ecc8ef7331826312b82377e89507
-  original: lts-15.10
+    size: 531718
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/6.yaml
+    sha256: 230a7266fc11f76222bd3bb68e9503ed11d553060a752f164bff6753ed03e271
+  original: lts-16.6

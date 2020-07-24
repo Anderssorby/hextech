@@ -17,7 +17,7 @@
 #
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
-resolver: lts-15.10
+resolver: lts-16.6
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -52,6 +52,9 @@ extra-deps:
 - text-format-0.3.2
 - generic-data-0.8.3.0
 - validation-selective-0.0.0.0
+- morpheus-graphql-0.13.0
+- morpheus-graphql-core-0.13.0
+- relude-0.6.0.0
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
