@@ -1,190 +1,74 @@
-{-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE ViewPatterns #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
-module Application
-    ( getApplicationDev
-    , appMain
-    , develMain
-    , makeFoundation
-    , makeLogWare
-    -- * for DevelMain
-    , getApplicationRepl
-    , shutdownApp
-    -- * for GHCI
-    , handler
-    , db
-    ) where
+module Application where
 
-import Control.Monad.Logger                 (liftLoc, runLoggingT)
-import Database.Persist.Postgresql          (createPostgresqlPool, pgConnStr,
-                                             pgPoolSize, runSqlPool)
-import Import
-import Language.Haskell.TH.Syntax           (qLocation)
-import Network.HTTP.Client.TLS              (getGlobalManager)
-import Network.Wai (Middleware)
-import Network.Wai.Handler.Warp             (Settings, defaultSettings,
-                                             defaultShouldDisplayException,
-                                             runSettings, setHost,
-                                             setOnException, setPort, getPort)
-import Network.Wai.Middleware.RequestLogger (Destination (Logger),
-                                             IPAddrSource (..),
-                                             OutputFormat (..), destination,
-                                             mkRequestLogger, outputFormat)
-import System.Log.FastLogger                (defaultBufSize, newStdoutLoggerSet,
-                                             toLogStr)
+import Authentication.JWT
+import Config
+import Control.Monad.Trans (lift, liftIO)
+import Control.Monad.Trans.Except
+import Control.Monad.Trans.Reader (runReaderT)
+import qualified Data.ByteString.Lazy.Char8 as B
+import Data.List (find)
+import Data.Morpheus (interpreter)
+import Data.Pool
+import qualified Data.Text as T
+import qualified Data.Text.Lazy as LT
+import Data.Time.Clock (getCurrentTime)
+import Database.PostgreSQL.Simple
+import Error
+import Graphql
+import Graphql.Resolver.Root
+import Network.HTTP.Types.Status (mkStatus, status200, status404)
+import Network.Wai.Middleware.Cors
+import Web.Scotty
 
--- Import all relevant handler modules here.
--- Don't forget to add new modules to your cabal file!
-import Handler.Common
-import Handler.Home
-import Handler.Comment
-import Handler.Profile
+-------------------------------------------------------------------------------
+api :: B.ByteString -> Web B.ByteString
+api = interpreter rootResolver
 
--- This line actually creates our YesodDispatch instance. It is the second half
--- of the call to mkYesodData which occurs in Foundation.hs. Please see the
--- comments there for more details.
-mkYesodDispatch "App" resourcesApp
+-------------------------------------------------------------------------------
+app :: IO ()
+app = do
+  init <- runExceptT initialize
+  case init of
+    Left err -> putStrLn err
+    Right res -> webServer res
 
--- | This function allocates resources (such as a database connection pool),
--- performs initialization and returns a foundation datatype value. This is also
--- the place to put your migrate statements to have automatic database
--- migrations handled by Yesod.
-makeFoundation :: AppSettings -> IO App
-makeFoundation appSettings = do
-    -- Some basic initializations: HTTP connection manager, logger, and static
-    -- subsite.
-    appHttpManager <- getGlobalManager
-    appLogger <- newStdoutLoggerSet defaultBufSize >>= makeYesodLogger
-    appStatic <-
-        (if appMutableStatic appSettings then staticDevel else static)
-        (appStaticDir appSettings)
+-------------------------------------------------------------------------------
 
-    -- We need a log function to create a connection pool. We need a connection
-    -- pool to create our foundation. And we need our foundation to get a
-    -- logging function. To get out of this loop, we initially create a
-    -- temporary foundation without a real connection pool, get a log function
-    -- from there, and then create the real foundation.
-    let mkFoundation appConnPool = App {..}
-        -- The App {..} syntax is an example of record wild cards. For more
-        -- information, see:
-        -- https://ocharles.org.uk/blog/posts/2014-12-04-record-wildcards.html
-        tempFoundation = mkFoundation $ error "connPool forced in tempFoundation"
-        logFunc = messageLoggerSource tempFoundation appLogger
+extractAuthorizationToken :: [(LT.Text, LT.Text)] -> Maybe LT.Text
+extractAuthorizationToken headers = case find ((== "authorization") . LT.toLower . fst) headers of
+  Just (_, authorization) -> case LT.splitOn " " authorization of
+    [token] -> Just token
+    ["Bearer", token] -> Just token
+    ["bearer", token] -> Just token
+    _ -> Nothing
+  _ -> Nothing
 
-    -- Create the database connection pool
-    pool <- flip runLoggingT logFunc $ createPostgresqlPool
-        (pgConnStr  $ appDatabaseConf appSettings)
-        (pgPoolSize $ appDatabaseConf appSettings)
-
-    -- Perform database migration using our application's logging settings.
-    runLoggingT (runSqlPool (runMigration migrateAll) pool) logFunc
-
-    -- Return the foundation
-    return $ mkFoundation pool
-
--- | Convert our foundation to a WAI Application by calling @toWaiAppPlain@ and
--- applying some additional middlewares.
-makeApplication :: App -> IO Application
-makeApplication foundation = do
-    logWare <- makeLogWare foundation
-    -- Create the WAI application and apply middlewares
-    appPlain <- toWaiAppPlain foundation
-    return $ logWare $ defaultMiddlewaresNoLogging appPlain
-
-makeLogWare :: App -> IO Middleware
-makeLogWare foundation =
-    mkRequestLogger def
-        { outputFormat =
-            if appDetailedRequestLogging $ appSettings foundation
-                then Detailed True
-                else Apache
-                        (if appIpFromHeader $ appSettings foundation
-                            then FromFallback
-                            else FromSocket)
-        , destination = Logger $ loggerSet $ appLogger foundation
-        }
-
-
--- | Warp settings for the given foundation value.
-warpSettings :: App -> Settings
-warpSettings foundation =
-      setPort (appPort $ appSettings foundation)
-    $ setHost (appHost $ appSettings foundation)
-    $ setOnException (\_req e ->
-        when (defaultShouldDisplayException e) $ messageLoggerSource
-            foundation
-            (appLogger foundation)
-            $(qLocation >>= liftLoc)
-            "yesod"
-            LevelError
-            (toLogStr $ "Exception from Warp: " ++ show e))
-      defaultSettings
-
--- | For yesod devel, return the Warp settings and WAI Application.
-getApplicationDev :: IO (Settings, Application)
-getApplicationDev = do
-    settings <- getAppSettings
-    foundation <- makeFoundation settings
-    wsettings <- getDevSettings $ warpSettings foundation
-    app <- makeApplication foundation
-    return (wsettings, app)
-
-getAppSettings :: IO AppSettings
-getAppSettings = loadYamlSettings [configSettingsYml] [] useEnv
-
--- | main function for use by yesod devel
-develMain :: IO ()
-develMain = develMainHelper getApplicationDev
-
--- | The @main@ function for an executable running this site.
-appMain :: IO ()
-appMain = do
-    -- Get the settings from all relevant sources
-    settings <- loadYamlSettingsArgs
-        -- fall back to compile-time values, set to [] to require values at runtime
-        [configSettingsYmlValue]
-
-        -- allow environment variables to override
-        useEnv
-
-    -- Generate the foundation from the settings
-    foundation <- makeFoundation settings
-
-    -- Generate a WAI Application from the foundation
-    app <- makeApplication foundation
-
-    -- Run the application with Warp
-    runSettings (warpSettings foundation) app
-
-
---------------------------------------------------------------
--- Functions for DevelMain.hs (a way to run the app from GHCi)
---------------------------------------------------------------
-getApplicationRepl :: IO (Int, App, Application)
-getApplicationRepl = do
-    settings <- getAppSettings
-    foundation <- makeFoundation settings
-    wsettings <- getDevSettings $ warpSettings foundation
-    app1 <- makeApplication foundation
-    return (getPort wsettings, foundation, app1)
-
-shutdownApp :: App -> IO ()
-shutdownApp _ = return ()
-
-
----------------------------------------------
--- Functions for use in development with GHCi
----------------------------------------------
-
--- | Run a handler
-handler :: Handler a -> IO a
-handler h = getAppSettings >>= makeFoundation >>= flip unsafeHandler h
-
--- | Run DB queries
-db :: ReaderT SqlBackend Handler a -> IO a
-db = handler . runDB
+-------------------------------------------------------------------------------
+webServer :: (Config, Pool Connection) -> IO ()
+webServer (config, connectionPool) =
+  scotty 8080 $ do
+    let myCors = cors (const $ Just (simpleCorsResourcePolicy {corsRequestHeaders = ["Content-Type"]}))
+    middleware myCors
+    post "/api" $ do
+      reqBody <- body
+      reqHeaders <- headers
+      currentTime <- liftIO getCurrentTime
+      let currentUserId = case extractAuthorizationToken reqHeaders of
+            Just token -> verifyJWT currentTime (jwtSecret config) (T.pack . LT.unpack $ token)
+            _ -> Nothing
+      let env = Env connectionPool config currentUserId
+      response <- liftIO . flip runReaderT env . runExceptT . runWeb $ api reqBody
+      case response of
+        Left error -> do
+          status status200
+          json $ toErrorResponse error
+        Right jsonResponse -> do
+          setHeader "Content-Type" "application/json; charset=utf-8"
+          status status200
+          raw jsonResponse
+    get "/graphiql" $ do
+      setHeader "Content-Type" "text/html; charset=utf-8"
+      file "graphiql.html"
+    notFound $ do
+      status status404
+      text "Not found"

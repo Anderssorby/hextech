@@ -1,54 +1,95 @@
-## Database Setup
+# Modern Haskell Webserver Boilerplate
+- Graphql API
+  - morpheus-graphql (https://github.com/morpheusgraphql/morpheus-graphql)
+  - Schema is in `schema.graphql`
+  ```graphql
+    type User {
+        id: Int!
+        email: String!
+        name: String!
+        updatedAt: String!
+        createdAt: String!
+    }
 
-After installing Postgres, run:
+    type Session {
+        token: String!
+        user: User!
+    }
 
-```
-createuser hextech-backend --pwprompt --superuser
-# Enter password hextech-backend when prompted
-createdb hextech-backend
-createdb hextech-backend_test
-```
+    type Query {
+        login(email: String!, password: String!): Session!
+        myUserInfo: User!
+    }
 
-## Haskell Setup
+    type Mutation {
+        register(email: String!, password: String!, name: String!): Session!
+        changePassword(oldPassword: String!, newPassword: String!): Boolean!
+    }
+  ```
+- Database:
+  - Postgresql + Opaleye
+  - Migration using `dbmate` (https://github.com/amacneil/dbmate)
+  - Pooling using `Data.Pool`
 
-1. If you haven't already, [install Stack](https://haskell-lang.org/get-started)
-	* On POSIX systems, this is usually `curl -sSL https://get.haskellstack.org/ | sh`
-2. Install the `yesod` command line tool: `stack install yesod-bin --install-ghc`
-3. Build libraries: `stack build`
+This boilerplate wires up:
+- Reading .env using `envy`
+- Database
+- Graphql API
+- Authorization using JWT
+- Monad transformers
 
-If you have trouble, refer to the [Yesod Quickstart guide](https://www.yesodweb.com/page/quickstart) for additional detail.
+## Running
+- Feed in you database & secret in `.env`:
+  ```terminal
+  $ cp .env.default .env
+  ```
+  ```env
+  DATABASE_URL="postgres://Dandoh:dandoh@127.0.0.1:5432/webhaskell?sslmode=disable"
+  JWT_SECRET="my_jwt_secret"
+  ```
+- Migrations
+  ```terminal
+  $ dbmate up
+  ```
+  - More uses refer https://github.com/amacneil/dbmate
+- Run webserver
+  ```terminal
+  $ stack run
+  ```
+  
+Now GraphQL API is at [http://localhost:8080/api](http://localhost:8080/api)
 
-## Development
+You can also access Graphql Playground at [http://localhost:8080/graphiql](http://localhost:8080/graphiql)
 
-Start a development server with:
+![Playground](images/playground.png)
 
-```
-stack exec -- yesod devel
-```
 
-As your code changes, your site will be automatically recompiled and redeployed to localhost.
 
-## Tests
+## Running on Docker
+- Feed in you database & secret in `.env`:
+  ```terminal
+  $ cp .env.default .env
+  ```
+- (Optional) Edit anything you need in the .env file
 
-```
-stack test --flag hextech-backend:library-only --flag hextech-backend:dev
-```
+- Create and start docker containers
+  ```terminal
+  $ docker-compose up
+  ```
 
-(Because `yesod devel` passes the `library-only` and `dev` flags, matching those flags means you don't need to recompile between tests and development, and it disables optimization to speed up your test compile times).
+- Now you can visit: http://localhost:8080/ in your local machine.
 
-## Documentation
+- Migrations will automatically run, and you can run them manually anytime using
+  ```terminal
+  $ docker-compose up dbmate
+  ```
+- Stack will restart whenever you change any .hs file, thanks to [entr](http://eradman.com/entrproject/)
 
-* Read the [Yesod Book](https://www.yesodweb.com/book) online for free
-* Check [Stackage](http://stackage.org/) for documentation on the packages in your LTS Haskell version, or [search it using Hoogle](https://www.stackage.org/lts/hoogle?q=). Tip: Your LTS version is in your `stack.yaml` file.
-* For local documentation, use:
-	* `stack haddock --open` to generate Haddock documentation for your dependencies, and open that documentation in a browser
-	* `stack hoogle <function, module or type signature>` to generate a Hoogle database and search for your query
-* The [Yesod cookbook](https://github.com/yesodweb/yesod-cookbook) has sample code for various needs
 
-## Getting Help
+## Contributors
 
-* Ask questions on [Stack Overflow, using the Yesod or Haskell tags](https://stackoverflow.com/questions/tagged/yesod+haskell)
-* Ask the [Yesod Google Group](https://groups.google.com/forum/#!forum/yesodweb)
-* There are several chatrooms you can ask for help:
-	* For IRC, try Freenode#yesod and Freenode#haskell
-	* [Functional Programming Slack](https://fpchat-invite.herokuapp.com/), in the #haskell, #haskell-beginners, or #yesod channels.
+PR are more than welcome. The only note is we use `ormolu` to format codes. 
+
+- [Nhan Thai](https://github.com/dandoh)
+- [Pacific01](https://github.com/Pacific01)
+- [Emad Shaaban](https://github.com/emadshaaban92)
