@@ -96,6 +96,13 @@ packages:
   original:
     hackage: morpheus-graphql-core-0.13.0
 - completed:
+    hackage: postgresql-simple-url-0.2.1.0@sha256:25aa9dca3c05b2c66b9336907d9300f1312fbdfa54e0d395b52d1a1e6579810a,1837
+    pantry-tree:
+      size: 397
+      sha256: fcd1457d9463ac9d2261d538c42a283761eb253c9bb230f6df450209348a38f8
+  original:
+    hackage: postgresql-simple-url-0.2.1.0
+- completed:
     hackage: relude-0.6.0.0@sha256:094ad587b28fa8dcc78fd0fba8927b970e5e4a9bb10a3126c0ca32a7ee61f3ca,8681
     pantry-tree:
       size: 4101
@@ -104,7 +111,7 @@ packages:
     hackage: relude-0.6.0.0
 snapshots:
 - completed:
-    size: 531718
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/6.yaml
-    sha256: 230a7266fc11f76222bd3bb68e9503ed11d553060a752f164bff6753ed03e271
-  original: lts-16.6
+    size: 531932
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/7.yaml
+    sha256: 96ceeddd4fd68b2d430f7695a12eadefee760b7034c88c75d99d0f380f483068
+  original: lts-16.7

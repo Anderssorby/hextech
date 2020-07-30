@@ -17,7 +17,7 @@
 #
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
-resolver: lts-16.6
+resolver: lts-16.7
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -29,7 +29,7 @@ resolver: lts-16.6
 #   - auto-update
 #   - wai
 packages:
-- ./backend
+#- ./backend
 - ./graphics
 # Dependency packages to be pulled from upstream that are not in the resolver.
 # These entries can reference officially published versions as well as
@@ -54,6 +54,7 @@ extra-deps:
 - validation-selective-0.0.0.0
 - morpheus-graphql-0.13.0
 - morpheus-graphql-core-0.13.0
+- postgresql-simple-url-0.2.1.0
 - relude-0.6.0.0
 
 # Override default flag values for local packages and extra-deps

@@ -1,4 +1,4 @@
-name:                web-haskell
+name:                hextech-backend
 version:             0.1.0.0
 github:              "Anderssorby/hextech-backend"
 license:             BSD3
@@ -80,7 +80,7 @@ executables:
       - -with-rtsopts=-N
       - -Wmissing-signatures
     dependencies:
-      - web-haskell
+      - hextech-backend
 
 tests:
   graphql-test:
@@ -92,4 +92,4 @@ tests:
       - -with-rtsopts=-N
       - -Wmissing-signatures
     dependencies:
-      - web-haskell
+      - hextech-backend

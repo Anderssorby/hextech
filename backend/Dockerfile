@@ -9,12 +9,12 @@ WORKDIR /root/
 
 ## Prebuild dependencies 
 COPY stack.* package.yaml /root/
-RUN stack build --only-dependencies
+RUN stack build --only-dependencies hextech-backend
 
 
 COPY ./entrypoint.sh /opt/entrypoint.sh
 RUN chmod +x /opt/entrypoint.sh
 
-COPY . /root
+COPY . /root/
 
 ENTRYPOINT ["/opt/entrypoint.sh"]
