@@ -4,29 +4,28 @@ services:
 
   db:
     image: postgres:12.2-alpine
+    env_file:
+      - ./backend/.env
     environment:
       - POSTGRES_PASSWORD
       - POSTGRES_USER
       - POSTGRES_DB
     volumes: 
       - db-data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
 
   backend:
     build: ./backend
     depends_on: 
       - db
+    env_file:
+      - ./backend/.env
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
       - JWT_SECRET
     volumes:
-      - ./backend/app:/root/app
-      - ./backend/images:/root/images
-      - ./backend/src:/root/src
-      - ./backend/.env:/root/.env
-      - ./backend/graphiql.html:/root/graphiql.html
-      - ./backend/schema.graphql:/root/schema.graphql
-      - ./backend/package.yaml:/root/package.yaml
-      - ./backend/stack.yaml:/root/stack.yaml
+      - ./backend:/app
     ports:
       - 8080:8080
 

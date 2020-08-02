@@ -5,16 +5,17 @@ RUN apt-get update \
      && apt-get -y install libpq-dev entr \
      && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /root/
+RUN mkdir /app
+WORKDIR /app/
 
 ## Prebuild dependencies 
-COPY stack.* package.yaml /root/
+COPY stack.* package.yaml /app/
 RUN stack build --only-dependencies hextech-backend
 
 
 COPY ./entrypoint.sh /opt/entrypoint.sh
 RUN chmod +x /opt/entrypoint.sh
 
-COPY . /root/
+COPY . /app/
 
 ENTRYPOINT ["/opt/entrypoint.sh"]

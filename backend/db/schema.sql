@@ -28,6 +28,38 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: games; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.games (
+    id integer NOT NULL,
+    name character varying NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: games_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.games_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: games_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.games_id_seq OWNED BY public.games.id;
+
+
+--
 -- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -71,6 +103,13 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
+-- Name: games id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.games ALTER COLUMN id SET DEFAULT nextval('public.games_id_seq'::regclass);
+
+
+--
 -- Name: users id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -94,6 +133,13 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: games_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX games_id ON public.games USING btree (id);
+
+
+--
 -- Name: users_email; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -105,6 +151,13 @@ CREATE UNIQUE INDEX users_email ON public.users USING btree (email);
 --
 
 CREATE UNIQUE INDEX users_id ON public.users USING btree (id);
+
+
+--
+-- Name: games games_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER games_updated_at BEFORE UPDATE ON public.games FOR EACH ROW EXECUTE FUNCTION public.update_timestamp();
 
 
 --
@@ -125,4 +178,5 @@ CREATE TRIGGER users_updated_at BEFORE UPDATE ON public.users FOR EACH ROW EXECU
 
 INSERT INTO public.schema_migrations (version) VALUES
     ('20200104122356'),
-    ('20200112080004');
+    ('20200112080004'),
+    ('20200801130028');

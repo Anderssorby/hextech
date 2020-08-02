@@ -1,4 +1,8 @@
-type User {
+interface Node {
+  id: Int!
+}
+
+type User implements Node {
     id: Int!
     email: String!
     name: String!
@@ -11,12 +15,30 @@ type Session {
     user: User!
 }
 
+type Game implements Node {
+  id: Int!
+  name: String!
+}
+
 type Query {
     login(email: String!, password: String!): Session!
-    myUserInfo: User!
+    currentUser: User!
+    availableGames: [Game!]!
 }
 
 type Mutation {
+    # Account
+    """
+    Register a new Account
+    """
     register(email: String!, password: String!, name: String!): Session!
     changePassword(oldPassword: String!, newPassword: String!): Boolean!
+
+    # Game
+    """
+    Create a new Game
+    """
+    createGame(name: String!): Game!
+
+    joinGame(id: Int!):Game!
 }

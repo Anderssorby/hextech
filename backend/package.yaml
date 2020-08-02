@@ -15,6 +15,7 @@ description:         Please see the README on GitHub at <https://github.com/dand
 default-extensions:
   - OverloadedStrings
   - DeriveGeneric
+  - NamedFieldPuns
   - GADTs
   - Arrows
   - OverloadedStrings
@@ -79,6 +80,8 @@ executables:
       - -rtsopts
       - -with-rtsopts=-N
       - -Wmissing-signatures
+      - -Wall
+      - -Werror
     dependencies:
       - hextech-backend
 

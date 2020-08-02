@@ -17,11 +17,11 @@ term_handler() {
 trap 'kill ${!}; term_handler' SIGTERM
 
 # Start PostgreSQL service
-/etc/init.d/postgresql start
+#/etc/init.d/postgresql start
 
-# wait forever
+# Rerun stack run whenever source files are updated
 while true
 do
-  ls -d **/*.hs | entr -d -r stack run
+  ls -d **/*.hs *.graphql | entr -d -r stack run
 done
 
