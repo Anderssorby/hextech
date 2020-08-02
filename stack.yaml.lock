@@ -89,6 +89,13 @@ packages:
   original:
     hackage: morpheus-graphql-0.13.0
 - completed:
+    hackage: morpheus-graphql-client-0.13.0@sha256:5b97e64b0fdad032889d0774368d03acadd571beeaa5dcf2139c3e8f09917001,1758
+    pantry-tree:
+      size: 1022
+      sha256: 80af403a178e036af6d1ce8305b195ef5152d4c1d4cf40fd6621010190b4604b
+  original:
+    hackage: morpheus-graphql-client-0.13.0
+- completed:
     hackage: morpheus-graphql-core-0.13.0@sha256:af4c0cc0f5c84cbcb85486329574f2ced98326be4fedd8a7fa116bf783d5a8b6,6774
     pantry-tree:
       size: 8516

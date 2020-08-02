@@ -33,6 +33,7 @@ dependencies:
 - text-conversions
 - random
 - ansi-terminal
+- morpheus-graphql-client
 # Dev
 - hlint
 - brittany
