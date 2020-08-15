@@ -1,6 +1,6 @@
 name:                hextech-backend
 version:             0.1.0.0
-github:              "Anderssorby/hextech-backend"
+github:              "Anderssorby/hextech"
 license:             BSD3
 author:              "Anderssorby"
 maintainer:          "Anderssorby"
