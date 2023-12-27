@@ -1,0 +1,14 @@
+{"version": 7,
+ "packagesDir": ".lake/packages",
+ "packages":
+ [{"url": "https://github.com/Anderssorby/SDL.lean",
+   "type": "git",
+   "subDir": null,
+   "rev": "df569777830f9754bd19a99e9871fcc813118a33",
+   "name": "SDL",
+   "manifestFile": "lake-manifest.json",
+   "inputRev": "main",
+   "inherited": false,
+   "configFile": "lakefile.lean"}],
+ "name": "Hextech",
+ "lakeDir": ".lake"}
