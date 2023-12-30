@@ -8,6 +8,8 @@ package «HexTech» where
 lean_lib «HexTech» where
   -- add library configuration options here
 
+--require LeanCopilot from git "https://github.com/lean-dojo/LeanCopilot.git" @ "v1.0.1"
+require std from git "https://github.com/leanprover/std4" @ "v4.4.0"
 require SDL from git "https://github.com/Anderssorby/SDL.lean" @ "main"
 
 @[default_target]
