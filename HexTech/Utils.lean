@@ -23,6 +23,15 @@ def HashMap.findFirst {K V : Type} [BEq K] [BEq V] [Hashable K] [Hashable V]
   (f : K → V → Bool) (self : HashMap K V) : Option V :=
   self.fold (λ d k v => if d.isNone ∧ f k v then some v else none) none
 
+def HashMap.values {K V : Type} [BEq K] [BEq V] [Hashable K] [Hashable V]
+  (self : HashMap K V) : Array V :=
+  self.fold (λ arr _ v => arr.push v) (Array.mkEmpty self.size)
+
+
+def HashMap.keys {K V : Type} [BEq K] [BEq V] [Hashable K] [Hashable V]
+  (self : HashMap K V) : Array K :=
+  self.fold (λ arr k _ => arr.push k) (Array.mkEmpty self.size)
+
 def HashMap.fromArray {K V : Type} [BEq K] [BEq V] [Hashable K] [Hashable V]
   (arr : Array (K × V)) : HashMap K V :=
   arr.foldl (λ map (k, v) => map.insert k v) <| mkHashMap (capacity := arr.size)
